@@ -238,7 +238,7 @@ is present, "Copy credit" (`navigator.clipboard.writeText`; on failure the credi
 revealed as selectable text). The card issues no network requests of its own; thumbnails are
 provider-hosted URLs loaded by the browser.
 
-Styles are a CSS string injected once (`src/client/styles.ts`), all classes prefixed `rk-`,
+Styles are a CSS string (`src/client/styles.ts`) appended as one `<style data-refkit>` element to `document.head` the first time the card mounts (idempotent by the data attribute), all classes prefixed `rk-`,
 colours via CSS variables with light and `prefers-color-scheme: dark` values. Pure helpers in
 `src/client/badges.ts` (verdict → class + label, license label shortening) are unit-tested
 without a DOM.
