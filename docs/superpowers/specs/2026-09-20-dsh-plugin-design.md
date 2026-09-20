@@ -34,9 +34,11 @@ Status: approved in conversation 2026-09-20; written for review. First release 0
   keyword, so the scoped name loses no discoverability.
 - `dsh.bundle.patch: "./cordis.patch.yml"` inserting one row `{ id: refkit, name:
   '@refkit/dsh-plugin' }` with the non-secret defaults of D4 as commented config.
-- `dsh.client: { platform: 'web', inject: [...] }` declaring the browser half; the `inject`
-  list is the minimal set that makes the `slots` service and the `tool.call.toolview` slot
-  available and is verified against a real `web` profile in the smoke (D8).
+- `dsh.client: { platform: 'web', inject: ['@deepseek-ai/dsh-client-runtime',
+  '@deepseek-ai/dsh-client-ui-tool', '@deepseek-ai/dsh-client-ui-conversation'] }` declaring the
+  browser half — dsh-refpics's list minus the sidebar plugin; it is the set that makes the `slots`
+  service and the `tool.call.toolview` slot available, verified against a real `web` profile in
+  the manual acceptance (D8).
 - `exports`: `"."` → `lib/index.js` (+ `lib/types/index.d.ts`), `"./client"` → `lib/client.js`,
   `"./package.json"`. `files`: `lib/**`, `src/**`, `cordis.patch.yml`, READMEs, LICENSE.
 - `lib/` is committed on release commits so `dsh plugin --profile web add github:refkitjs/dsh-plugin`
@@ -98,7 +100,9 @@ Parameters (implicit open object root):
 | `explain` | boolean | include core's full `SearchMeta` under `meta` |
 
 Execution: `searchWithMeta({ query, modalities, sources, controls, limit, cursor, minRelevance,
-gateFor, deadlineMs: cfg.deadlineMs, signal: exec.signal })` on the current client. When
+gateFor, poolFactor: cfg.poolFactor, deadlineMs: cfg.deadlineMs, signal: exec.signal })` on the
+current client. DSL `default` annotations are model-visible hints only; `execute` resolves every
+omitted argument itself (`modalities` → `['image']`, `limit` → `cfg.limit`, clamped 1..30). When
 `intent ?? gateFor` is set, each reference is annotated with `client.evaluateUse(ref, intent)`
 and `client.buildAttribution(ref)`.
 
@@ -148,7 +152,8 @@ credit link), `licenseVersion?`, `author?`, `title?`, `editorialOnly?` (boolean)
 `jurisdiction?`, `userJurisdiction?`, `facts?` (object, `additionalProperties: false`:
 `commercialUse`, `derivatives`, `redistribution` each `oneOf [boolean, const 'unknown']`;
 `attributionRequired`, `shareAlike` boolean) — the override for a source whose terms are
-narrower than its label.
+narrower than its label; re-validated in `execute` with core's `licenseFactsSchema` so the two
+vocabularies cannot drift.
 
 Execution: build a `RightsRecord` (`rehostPolicy: 'cache-allowed'`, `raw: { sourceTerms: '',
 sourceUrl: canonicalUrl }`), `evaluateUse(rights, intent, { userJurisdiction })`, and
@@ -167,7 +172,8 @@ Schemastery `Config`, settings namespace `refkit`, installed through
 through a thunk, so a key typed into Settings → Plugins → refkit takes effect on the next call.
 
 Secret fields (`role('secret')`, masked in the card, never logged, never in tool output),
-each with an environment fallback identical to `@refkit/mcp`'s CLI so one `.env` serves both:
+each with an environment fallback. The nine keyed sources use exactly the names `@refkit/mcp`'s
+CLI reads, so one `.env` serves both; `openverseToken` is plugin-only:
 
 | field | env (first wins) | enables |
 |---|---|---|
@@ -272,9 +278,9 @@ cite `canonicalUrl` and repeat the `credit` line whenever a result requires attr
 
 Vitest, in-process, no network in CI.
 
-- `tools/controls`: flattened key set equals `SEARCH_CONTROL_KEYS`; every enum literal equals
-  core's `SearchControls` type (compile-time via `satisfies`, plus a runtime check against
-  `buildSearchControlsSchema().shape` keys).
+- `tools/controls`: the flattened `group.field` key set equals `SEARCH_CONTROL_KEYS`; the
+  top-level key set equals `Object.keys(buildSearchControlsSchema().shape)`; enum literals are
+  checked at compile time by typing the spec `satisfies` a mapping derived from `SearchControls`.
 - `config`: registry ids pinned; keyless providers enabled with empty config; a key enables its
   providers; env fallback order; settings value beats env; whitelist intersection; unknown id
   rejected by `validate`; `maxObjects` equals `limit`.
