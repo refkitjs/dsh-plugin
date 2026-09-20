@@ -1429,7 +1429,7 @@ Note: `trunc` pads to `max` including the ellipsis, so a 300-char description be
  */
 
 import { defineTool, type GenericCallView, type GenericResultView, type InferArgs, type InferValue, type ParameterSchemaSpec, type ToolDefinition, type ValueSchemaSpec } from '@deepseek-ai/dsh-tools'
-import { INTENTS, type Attribution, type Intent, type ProviderSearchStatus, type Reference, type RefkitClient, type SearchInput, type Verdict } from '@refkit/core'
+import { INTENTS, type Attribution, type Intent, type ProviderError, type ProviderSearchStatus, type Reference, type RefkitClient, type SearchInput, type Verdict } from '@refkit/core'
 import { KEYLESS_IDS, PROVIDER_IDS, PROVIDER_REGISTRY, type ResolvedConfig } from '../config.ts'
 import { DECISIONS, MODALITIES, SOURCE_STATUSES, narrowOutcome, trunc, type Json, type RefTile, type SearchOutcome, type SourceStatus } from '../core/outcome.ts'
 import { cardMeta, renderSearch } from '../render.ts'
@@ -1605,6 +1605,9 @@ export async function runSearch(args: SearchArgs, deps: SearchDeps, signal?: Abo
   const limit = Math.min(MAX_LIMIT, Math.max(1, Math.floor(args.limit ?? cfg.limit)))
   const intent: Intent | undefined = args.intent ?? args.gateFor
 
+  // Core's AggregateError carries raw errors without provider ids; the
+  // onProviderError callback is the only place the id and the error meet.
+  const failures: { providerId: string; error: unknown }[] = []
   const input: SearchInput = defined({
     query,
     modalities,
@@ -1617,6 +1620,7 @@ export async function runSearch(args: SearchArgs, deps: SearchDeps, signal?: Abo
     minRelevance: args.minRelevance,
     gateFor: args.gateFor,
     signal,
+    onProviderError: (e: ProviderError) => { failures.push(e) },
   })
 
   let result
@@ -1624,11 +1628,9 @@ export async function runSearch(args: SearchArgs, deps: SearchDeps, signal?: Abo
     result = await client.searchWithMeta(input)
   } catch (err) {
     if (err instanceof AggregateError) {
-      const parts = err.errors.map((e: unknown) => {
-        const pe = e as { providerId?: string; error?: unknown }
-        const inner = pe && typeof pe === 'object' && 'error' in pe ? pe.error : e
-        return `${pe?.providerId ?? '?'}: ${message(inner)}`
-      })
+      const parts = failures.length > 0
+        ? failures.map(f => `${f.providerId}: ${message(f.error)}`)
+        : err.errors.map((e: unknown, i: number) => `#${i + 1}: ${message(e)}`)
       throw new Error(`all ${err.errors.length} sources failed: ${parts.join('; ')}`)
     }
     if (args.sources && args.sources.length > 0) {
@@ -1684,7 +1686,7 @@ export function createSearchTool(deps: SearchDeps): ToolDefinition {
 }
 ```
 
-Note on the error path: core throws `AggregateError` whose `errors` are the raw provider errors (see `pipeline.ts` `runs.filter(r => !r.ok).map(r => r.error)`). If those entries carry no `providerId`, the test regex `a: boom` will fail; in that case derive the id from `result` being unavailable is impossible, so instead build the message from `client.providers` order when `err.errors.length === client.providers.length` — implement that fallback and keep the test. Report which branch the real error shape needed.
+Note on the error path: core's `AggregateError.errors` are the raw provider errors with no ids (`{ ok: false, error }` runs), which is why `onProviderError` collects `{ providerId, error }` pairs during the search; the numbered fallback only fires if the callback never ran.
 
 - [ ] **Step 6: Run the tests, typecheck, lint**
 
@@ -1937,7 +1939,7 @@ git commit -m "feat: refkit_rights tool — stateless use-gate check with credit
 
 **Interfaces:**
 - Consumes: `Config` (schema + type), `resolveConfig`, `validateConfig`, `buildClient`, `ResolvedConfig` (Task 2); `createSearchTool`, `SearchDeps`, `runSearch` (Task 4); `createRightsTool` (Task 5); `Context` from `@deepseek-ai/cordis`; type augmentations from `@deepseek-ai/dsh-tools`, `@deepseek-ai/dsh-settings`, `@deepseek-ai/dsh-system-prompt`; `RefkitClient`, `RefkitOptions`, `createRefkit` from `@refkit/core`.
-- Produces: `name`, `inject`, `Config`, `GUIDANCE`, `apply(ctx, config?)`, `applyWith(ctx, config, deps: { createClient })`; re-exports `runSearch`, `runRights`, `createSearchTool`, `createRightsTool`, `resolveConfig`, `PROVIDER_IDS`, `narrowOutcome` for the smoke script and hosts.
+- Produces: `name`, `inject`, `Config`, `GUIDANCE`, `apply(ctx, config?)`, `applyWith(ctx, config, deps: { createClient }): PluginHandles` where `PluginHandles = { getClient(): RefkitClient; getConfig(): ResolvedConfig }`; re-exports `runSearch`, `runRights`, `createSearchTool`, `createRightsTool`, `resolveConfig`, `PROVIDER_IDS`, `narrowOutcome` for the smoke script and hosts.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1979,20 +1981,27 @@ describe('plugin entry', () => {
     const settings: FakeSettings = { installSection: (_o, n, _s, _e, h) => { ns = n; hooks = h } }
     const { ctx } = fakeContext({ settings })
     const built: string[][] = []
-    applyWith(ctx as never, {}, {
+    const handles = applyWith(ctx as never, {}, {
       createClient: (opts) => { built.push(opts.providers.map(p => p.id)); return { providers: opts.providers } as never },
     })
     expect(ns).toBe('refkit')
-    // the client is built lazily; a settings change swaps the source and drops the cached client
+    // lazy: nothing is built until a tool asks for the client
+    expect(built).toHaveLength(0)
+    handles.getClient()
+    handles.getClient()
+    expect(built).toHaveLength(1)
+    expect(built[0]).not.toContain('pexels')
+    // a settings change swaps the source and drops the cached client
     let current: Record<string, unknown> = {}
     hooks!.setSource(() => current)
-    hooks!.onChange()
-    expect(built).toHaveLength(0)
     expect(() => hooks!.validate?.({ sources: ['nope'] })).toThrow(/valid ids/)
-    current = { pexelsApiKey: 'k' }
+    current = { pexelsApiKey: 'k', limit: 7 }
     hooks!.onChange()
-    // force a build through the search tool's deps: the tool closes over getClient
-    expect(built).toHaveLength(0)
+    expect(handles.getConfig().limit).toBe(7)
+    handles.getClient()
+    expect(built).toHaveLength(2)
+    expect(built[1]).toContain('pexels')
+    expect(built[1]).toContain('pexels-video')
   })
   it('registers a system-prompt section when the service exists', () => {
     const sections: { name: string; order: number; text: string }[] = []
@@ -2059,8 +2068,13 @@ export interface ApplyDeps {
   createClient: (opts: RefkitOptions) => RefkitClient
 }
 
-/** Register everything; `deps` exists so tests can observe client construction. */
-export function applyWith(ctx: Context, config: Config, deps: ApplyDeps): void {
+export interface PluginHandles {
+  getClient(): RefkitClient
+  getConfig(): ResolvedConfig
+}
+
+/** Register everything; `deps` exists so tests can observe client construction. Returns the live handles the tools close over. */
+export function applyWith(ctx: Context, config: Config, deps: ApplyDeps): PluginHandles {
   validateConfig(config)
   let source: () => Config = () => config
   let resolved: ResolvedConfig = resolveConfig(source())
@@ -2086,6 +2100,7 @@ export function applyWith(ctx: Context, config: Config, deps: ApplyDeps): void {
 
   ctx.tools.register(createSearchTool({ client: getClient, config: getConfig }))
   ctx.tools.register(createRightsTool())
+  return { getClient, getConfig }
 }
 
 /** Cordis entry point. */
