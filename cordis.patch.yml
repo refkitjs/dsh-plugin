@@ -1,0 +1,16 @@
+# @refkit/dsh-plugin bundle patch: one row inserted into the profile roster.
+# Install with `dsh plugin --profile web add @refkit/dsh-plugin` (npm) or
+# `dsh plugin --profile web add github:refkitjs/dsh-plugin`. Keys go into
+# Settings -> Plugins -> refkit (or the REFKIT_* environment variables); the
+# non-secret defaults below can be overridden here or in the settings card.
+- insert:
+    - id: refkit
+      name: '@refkit/dsh-plugin'
+      config:
+        # sources: []            # whitelist of provider ids; empty = every enabled source
+        # limit: 12              # default results per call (1..30); also caps museum detail fetches
+        # poolFactor: 2          # fusion pool multiplier (1..4)
+        # deadlineMs: 15000      # whole-search deadline
+        # timeoutMs: 10000       # per-source timeout
+        # rerank: true           # default lexical reranker
+        # sourceConfidence: true # weight sources by query hit-rate
