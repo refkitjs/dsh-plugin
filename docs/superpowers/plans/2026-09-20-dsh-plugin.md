@@ -139,7 +139,7 @@ Resolve each provider version with `npm view @refkit/provider-<name> version` an
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
     "@deepseek-ai/dsh-client-runtime": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-conversation": "next",
+    "@deepseek-ai/dsh-client-ui-conversation": "0.1.5-rc.2",
     "@deepseek-ai/dsh-client-ui-tool": "0.1.5-rc.2",
     "@deepseek-ai/dsh-settings": "0.1.5-rc.2",
     "@deepseek-ai/dsh-system-prompt": "0.1.5-rc.2",
@@ -153,11 +153,33 @@ Resolve each provider version with `npm view @refkit/provider-<name> version` an
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.64.0",
     "vitest": "^3.2.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "@deepseek-ai/dsh-invariants": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-session": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-agent": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-llm": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-scope": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-user-approval": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-code-runtime": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-brand": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-goal": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-commands": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-credentials": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-session-projection": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-api-remotes": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-typert-registry": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-api-gateway": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-util-values": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-client-ui-slots": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-client-ui-chat": "0.1.5-rc.2"
+    }
   }
 }
 ```
 
-After `pnpm install`, replace the `"next"` dist-tag for `@deepseek-ai/dsh-client-ui-conversation` with the exact version pnpm resolved (read it from `pnpm-lock.yaml`), so the lockfile and manifest agree.
+The `pnpm.overrides` block exists because every `@deepseek-ai/*` package has only prerelease versions and pnpm's peer auto-install reconciles their `^0.1.5-rc.2` peer ranges into `>=0.1.5 <0.2.0-0`, which matches nothing; pinning the family to the `next` versions bypasses that. Overrides apply only to this repository's install, never to consumers.
 
 - [ ] **Step 3: Write `.npmrc`, `cordis.patch.yml`, `LICENSE`**
 
@@ -358,7 +380,7 @@ export default function config(): UserConfig[] {
 - [ ] **Step 6: Install and confirm the toolchain resolves**
 
 Run: `pnpm install`
-Expected: succeeds; `node_modules/@refkit/core/package.json` has `"version": "0.9.0"`; `node_modules/@deepseek-ai/dsh-tools/package.json` has `"version": "0.1.5-rc.2"`. Then replace the `"next"` dist-tag in `devDependencies` with the resolved exact version and run `pnpm install` again (lockfile must be unchanged).
+Expected: succeeds; `node_modules/@refkit/core/package.json` has `"version": "0.9.0"`; `node_modules/@deepseek-ai/dsh-tools/package.json` has `"version": "0.1.5-rc.2"`; `node -e "import('@deepseek-ai/dsh-tools').then(m => console.log(typeof m.defineTool))"` prints `function`.
 
 - [ ] **Step 7: Write the failing outcome tests**
 
