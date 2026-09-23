@@ -8,7 +8,7 @@
 
 import { defineTool, type GenericCallView, type GenericResultView, type InferArgs, type InferValue, type ParameterSchemaSpec, type ToolDefinition, type ValueSchemaSpec } from '@deepseek-ai/dsh-tools'
 import { INTENTS, type Attribution, type Intent, type ProviderError, type ProviderSearchStatus, type Reference, type RefkitClient, type SearchInput, type Verdict } from '@refkit/core'
-import { KEYLESS_IDS, PROVIDER_IDS, PROVIDER_REGISTRY, type ResolvedConfig } from '../config.ts'
+import { MAX_DEADLINE_MS, PROVIDER_REGISTRY, type ResolvedConfig } from '../config.ts'
 import { DECISIONS, MODALITIES, SOURCE_STATUSES, defined, narrowOutcome, trunc, type Json, type RefTile, type SearchOutcome, type SourceStatus } from '../core/outcome.ts'
 import { cardMeta, renderSearch } from '../render.ts'
 import { CONTROLS_PARAMETER } from './controls.ts'
@@ -163,12 +163,18 @@ export function toSourceStatus(status: ProviderSearchStatus): SourceStatus {
   }) as SourceStatus
 }
 
-function sourcesError(err: unknown, requested: readonly string[], enabled: readonly string[]): Error {
-  const unconfigured = requested.filter(id => PROVIDER_IDS.includes(id) && !enabled.includes(id) && !KEYLESS_IDS.includes(id))
-  const hint = unconfigured.length > 0
-    ? ` ${unconfigured.join(', ')}: configure its key under Settings -> Plugins -> refkit.`
-    : ''
-  return new Error(`${message(err)} Enabled source ids: ${enabled.join(', ') || '(none)'}.${hint}`)
+/** Why a known provider the call asked for is not enabled; undefined for unknown or enabled ids. */
+function disabledHint(id: string, enabled: readonly string[], cfg: ResolvedConfig): string | undefined {
+  const entry = PROVIDER_REGISTRY.find(e => e.id === id)
+  if (entry === undefined || enabled.includes(id)) return undefined
+  if (entry.key !== undefined && cfg.keys[entry.key] === undefined) return `${id}: configure its key under Settings -> Plugins -> refkit.`
+  if (cfg.sources.length > 0 && !cfg.sources.includes(id)) return `${id}: excluded by the sources setting under Settings -> Plugins -> refkit.`
+  return undefined
+}
+
+function sourcesError(err: unknown, requested: readonly string[], enabled: readonly string[], cfg: ResolvedConfig): Error {
+  const hints = requested.map(id => disabledHint(id, enabled, cfg)).filter((h): h is string => h !== undefined)
+  return new Error(`${message(err)} Enabled source ids: ${enabled.join(', ') || '(none)'}.${hints.map(h => ` ${h}`).join('')}`)
 }
 
 /** Execute one search against the current client and shape the canonical value. */
@@ -178,6 +184,7 @@ export async function runSearch(args: SearchArgs, deps: SearchDeps, signal?: Abo
   const cfg = deps.config()
   const client = deps.client()
   const modalities = args.modalities && args.modalities.length > 0 ? [...args.modalities] : (['image'] as SearchOutcome['modalities'])
+  const sources = args.sources && args.sources.length > 0 ? args.sources : undefined
   const limit = Math.min(MAX_LIMIT, Math.max(1, Math.floor(args.limit ?? cfg.limit)))
   const intent: Intent | undefined = args.intent ?? args.gateFor
 
@@ -189,7 +196,7 @@ export async function runSearch(args: SearchArgs, deps: SearchDeps, signal?: Abo
   const input: SearchInput = defined({
     query,
     modalities,
-    sources: args.sources,
+    sources,
     controls: args.controls,
     limit,
     cursor: args.cursor,
@@ -211,9 +218,7 @@ export async function runSearch(args: SearchArgs, deps: SearchDeps, signal?: Abo
         : err.errors.map((e: unknown, i: number) => `#${i + 1}: ${message(e)}`)
       throw new Error(`all ${err.errors.length} sources failed: ${parts.join('; ')}`)
     }
-    if (args.sources && args.sources.length > 0) {
-      throw sourcesError(err, args.sources, client.providers.map(p => p.id))
-    }
+    if (sources) throw sourcesError(err, sources, client.providers.map(p => p.id), cfg)
     throw err
   }
 
@@ -247,7 +252,7 @@ function presentCall(args: SearchArgs): GenericCallView {
   return { card: 'generic', title: 'refkit search', kind: 'search', rawInput: defined({ query: args.query, modalities: args.modalities, intent: args.intent ?? args.gateFor }) }
 }
 
-/** The registered definition; `timeoutMs` is fixed from the configuration at registration time. */
+/** The registered definition. */
 export function createSearchTool(deps: SearchDeps): ToolDefinition {
   return defineTool({
     name: SEARCH_TOOL_NAME,
@@ -258,7 +263,8 @@ export function createSearchTool(deps: SearchDeps): ToolDefinition {
       render: (_args, value) => [{ type: 'text', text: renderSearch(value) }],
       presentationMeta: (_args, value) => cardMeta(value) as unknown as Json,
     },
-    timeoutMs: deps.config().deadlineMs + 5000,
+    // A backstop only: dsh fixes this at registration, while core enforces the live cfg.deadlineMs per search.
+    timeoutMs: MAX_DEADLINE_MS + 5000,
     isConcurrencySafe: () => true,
     presentCall,
     presentResult: (_args, result): GenericResultView => {

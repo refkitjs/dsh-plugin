@@ -29,6 +29,14 @@ describe('renderSearch', () => {
     expect(text).toContain('warning: met: upstream 503')
     expect(text).toContain('more: pass cursor "abc" to continue')
   })
+  it('collapses whitespace in titles and credit lines so each reference stays one line', () => {
+    const tile = { ...base.references[0], title: 'Neon\n  alley ', attribution: '"Neon\nalley" by A\t(CC BY 4.0)\n' }
+    const lines = renderSearch({ ...base, count: 1, references: [tile] }).split('\n')
+    expect(lines[1]).toBe('1. Neon alley — openverse — CC-BY 4.0 — allowed-with-attribution — https://o/1')
+    expect(lines[2]).toBe('   credit: "Neon alley" by A (CC BY 4.0)')
+    expect(lines[3]).toBe('warning: met: upstream 503')
+    expect(renderSearch({ ...base, count: 1, references: [{ ...tile, title: ' \n ' }] }).split('\n')[1]).toMatch(/^1\. \(untitled\) — /)
+  })
   it('renders the empty note and omits the intent suffix when absent', () => {
     const text = renderSearch({ ...base, intent: undefined, count: 0, references: [], nextCursor: undefined, warnings: [], note: 'No results' })
     expect(text.split('\n')[0]).toBe('0 reference(s) for "neon alley"')

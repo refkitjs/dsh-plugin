@@ -14,6 +14,8 @@ export declare const KEY_FIELDS: readonly ["unsplashAccessKey", "pexelsApiKey", 
 export type KeyField = (typeof KEY_FIELDS)[number];
 /** Environment names per key, first match wins. The nine keyed sources mirror @refkit/mcp's CLI. */
 export declare const KEY_ENV: Record<KeyField, readonly string[]>;
+/** Upper bound of the configurable whole-search deadline; the tool's timeout backstop derives from it. */
+export declare const MAX_DEADLINE_MS = 60000;
 export declare const DEFAULTS: {
     readonly limit: 12;
     readonly poolFactor: 2;

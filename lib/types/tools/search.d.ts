@@ -322,6 +322,6 @@ export declare function toTile(ref: Reference, assessment?: {
 export declare function toSourceStatus(status: ProviderSearchStatus): SourceStatus;
 /** Execute one search against the current client and shape the canonical value. */
 export declare function runSearch(args: SearchArgs, deps: SearchDeps, signal?: AbortSignal): Promise<SearchOutcome>;
-/** The registered definition; `timeoutMs` is fixed from the configuration at registration time. */
+/** The registered definition. */
 export declare function createSearchTool(deps: SearchDeps): ToolDefinition;
 //# sourceMappingURL=search.d.ts.map

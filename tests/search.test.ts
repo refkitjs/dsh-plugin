@@ -33,7 +33,7 @@ describe('schemas', () => {
   it('defineTool accepts the definition', () => {
     const def = createSearchTool(deps([provider('a', [emit('https://a/1', 'CC0-1.0')])]))
     expect(def.name).toBe(SEARCH_TOOL_NAME)
-    expect(def.timeoutMs).toBe(15000 + 5000)
+    expect(def.timeoutMs).toBe(65000)
   })
 })
 
@@ -75,7 +75,7 @@ describe('runSearch', () => {
     const out = await runSearch({ query: 'x' }, deps([provider('a', [emit('https://a/1', 'CC0-1.0')]), failing('b')]))
     expect(out.count).toBe(1)
     expect(out.sources.find(s => s.id === 'b')?.status).toBe('failed')
-    expect(out.warnings.some(w => w.includes('b'))).toBe(true)
+    expect(out.warnings.some(w => w.startsWith('b: '))).toBe(true)
     for (const w of out.warnings) expect(w.length).toBeLessThanOrEqual(260)
   })
   it('throws a bounded message when every source fails', async () => {
@@ -87,6 +87,20 @@ describe('runSearch', () => {
   })
   it('names the settings card for a known but unconfigured keyed source', async () => {
     await expect(runSearch({ query: 'x', sources: ['unsplash'] }, deps([provider('a', [])]))).rejects.toThrow(/Settings -> Plugins -> refkit/)
+  })
+  it('names the sources setting for a known source excluded by the allowlist', async () => {
+    const keyless = await runSearch({ query: 'x', sources: ['met'] }, deps([provider('a', [])], resolveConfig({ sources: ['a'] }, {}))).catch((e: Error) => e)
+    expect((keyless as Error).message).toMatch(/met: excluded by the sources setting under Settings -> Plugins -> refkit/)
+    expect((keyless as Error).message).not.toMatch(/configure its key/)
+    const keyed = await runSearch({ query: 'x', sources: ['unsplash'] }, deps([provider('a', [])], resolveConfig({ sources: ['a'], unsplashAccessKey: 'sekrit-unsplash-key' }, {}))).catch((e: Error) => e)
+    expect((keyed as Error).message).toMatch(/unsplash: excluded by the sources setting/)
+    expect((keyed as Error).message).not.toMatch(/configure its key/)
+    expect((keyed as Error).message).not.toContain('sekrit-unsplash-key')
+  })
+  it('treats an empty sources array exactly like an omitted one', async () => {
+    const d = deps([provider('a', [emit('https://a/1', 'CC0-1.0')])])
+    const omitted = await runSearch({ query: 'x' }, d)
+    expect(await runSearch({ query: 'x', sources: [] }, d)).toEqual(omitted)
   })
   it('sets the note on an empty result and rejects a blank query', async () => {
     const out = await runSearch({ query: 'x' }, deps([provider('a', [])]))

@@ -52,6 +52,9 @@ export const KEY_ENV: Record<KeyField, readonly string[]> = {
   openverseToken: ['REFKIT_OPENVERSE_TOKEN'],
 }
 
+/** Upper bound of the configurable whole-search deadline; the tool's timeout backstop derives from it. */
+export const MAX_DEADLINE_MS = 60000
+
 export const DEFAULTS = {
   limit: 12,
   poolFactor: 2,
@@ -101,7 +104,7 @@ export const Config: z<Config> = z.object({
   sources: z.array(z.string()).default([]).description('Provider ids to enable (empty = every source whose key is present).'),
   limit: z.number().step(1).min(1).max(30).default(DEFAULTS.limit).description('Default results per call; also caps per-item detail fetches for met, rijksmuseum and polyhaven.'),
   poolFactor: z.number().step(1).min(1).max(4).default(DEFAULTS.poolFactor).description('Rank-fusion pool multiplier.'),
-  deadlineMs: z.number().step(1).min(1000).max(60000).default(DEFAULTS.deadlineMs).description('Whole-search deadline in ms.'),
+  deadlineMs: z.number().step(1).min(1000).max(MAX_DEADLINE_MS).default(DEFAULTS.deadlineMs).description('Whole-search deadline in ms.'),
   timeoutMs: z.number().step(1).min(1000).max(60000).default(DEFAULTS.timeoutMs).description('Per-source timeout in ms.'),
   rerank: z.boolean().default(DEFAULTS.rerank).description('Rerank fused results lexically over title, description, tags and excerpt.'),
   sourceConfidence: z.boolean().default(DEFAULTS.sourceConfidence).description('Down-weight sources whose batch never mentions the query.'),
@@ -148,7 +151,7 @@ export function resolveConfig(config: Config, env: NodeJS.ProcessEnv = process.e
     sources: Array.isArray(config.sources) ? config.sources.filter(s => typeof s === 'string' && s.length > 0) : [],
     limit: clampInt(config.limit, DEFAULTS.limit, 1, 30),
     poolFactor: clampInt(config.poolFactor, DEFAULTS.poolFactor, 1, 4),
-    deadlineMs: clampInt(config.deadlineMs, DEFAULTS.deadlineMs, 1000, 60000),
+    deadlineMs: clampInt(config.deadlineMs, DEFAULTS.deadlineMs, 1000, MAX_DEADLINE_MS),
     timeoutMs: clampInt(config.timeoutMs, DEFAULTS.timeoutMs, 1000, 60000),
     rerank: config.rerank ?? DEFAULTS.rerank,
     sourceConfidence: config.sourceConfidence ?? DEFAULTS.sourceConfidence,

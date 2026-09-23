@@ -9,6 +9,11 @@ import { defined, trunc, type CardOutcome, type RefTile, type SearchOutcome } fr
 const EXCERPT_CHARS = 160
 const DESCRIPTION_CHARS = 200
 
+/** Collapse whitespace runs (newlines included) so upstream text cannot break the line layout. */
+function oneLine(text: string): string {
+  return text.replace(/\s+/g, ' ').trim()
+}
+
 function licenseLabel(tile: RefTile): string {
   return tile.licenseVersion ? `${tile.license} ${tile.licenseVersion}` : tile.license
 }
@@ -19,9 +24,10 @@ export function renderSearch(value: SearchOutcome): string {
   lines.push(`${value.count} reference(s) for "${value.query}"${value.intent ? ` — intent: ${value.intent}` : ''}`)
   value.references.forEach((tile, i) => {
     const decision = tile.useVerdict ? ` — ${tile.useVerdict.decision}` : ''
-    lines.push(`${i + 1}. ${tile.title ?? '(untitled)'} — ${tile.provider} — ${licenseLabel(tile)}${decision} — ${tile.canonicalUrl}`)
-    if (tile.attribution) lines.push(`   credit: ${tile.attribution}`)
-    if (tile.modality === 'text' && tile.excerpt) lines.push(`   excerpt: ${trunc(tile.excerpt.replace(/\s+/g, ' ').trim(), EXCERPT_CHARS)}`)
+    lines.push(`${i + 1}. ${oneLine(tile.title ?? '') || '(untitled)'} — ${tile.provider} — ${licenseLabel(tile)}${decision} — ${tile.canonicalUrl}`)
+    const credit = oneLine(tile.attribution ?? '')
+    if (credit) lines.push(`   credit: ${credit}`)
+    if (tile.modality === 'text' && tile.excerpt) lines.push(`   excerpt: ${trunc(oneLine(tile.excerpt), EXCERPT_CHARS)}`)
   })
   if (value.note) lines.push(value.note)
   for (const warning of value.warnings) lines.push(`warning: ${warning}`)
