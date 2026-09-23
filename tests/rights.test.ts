@@ -22,6 +22,7 @@ describe('refkit_rights', () => {
   it('a non-commercial license is denied for commercial use and needs no credit line', () => {
     const out = runRights({ license: 'CC-BY-NC', canonicalUrl: url, intent: 'commercial-product' })
     expect(out.decision).toBe('denied')
+    expect(out.attribution.required).toBe(true)
     expect(out.attribution.text).toBeUndefined()
   })
   it('an unknown id without facts is needs-review (strict deny by construction)', () => {

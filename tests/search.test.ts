@@ -3,7 +3,8 @@ import { createRefkit, defineProvider, type EmittedReference, type LicenseId } f
 import { assertSupportedJsonSchema, parameterSchemaSpecToJsonSchema, valueSchemaSpecToJsonSchema } from '@deepseek-ai/dsh-tools'
 import { resolveConfig } from '../src/config.ts'
 import { SEARCH_OUTPUT, SEARCH_PARAMETERS, SEARCH_TOOL_NAME, createSearchTool, runSearch, type SearchDeps } from '../src/tools/search.ts'
-import { narrowOutcome } from '../src/core/outcome.ts'
+import { narrowOutcome, type SearchOutcome } from '../src/core/outcome.ts'
+import { cardMeta, renderSearch } from '../src/render.ts'
 
 const emit = (url: string, license: LicenseId, extra: Partial<EmittedReference> = {}): EmittedReference => ({
   modality: 'image',
@@ -34,6 +35,30 @@ describe('schemas', () => {
     const def = createSearchTool(deps([provider('a', [emit('https://a/1', 'CC0-1.0')])]))
     expect(def.name).toBe(SEARCH_TOOL_NAME)
     expect(def.timeoutMs).toBe(65000)
+  })
+})
+
+/** The wiring surface under test, narrowed from ToolDefinition's JsonValue-typed, optional members. */
+interface WiredSearchTool {
+  output: {
+    render(args: unknown, value: SearchOutcome): unknown
+    presentationMeta(args: unknown, value: SearchOutcome): unknown
+  }
+  presentCall(args: unknown): unknown
+  presentResult(args: unknown, result: { content: unknown[]; isError: boolean; meta: unknown }): { title?: string }
+}
+
+describe('tool wiring', () => {
+  it('render, presentationMeta, presentCall and presentResult project the outcome', async () => {
+    const d = deps([provider('a', [emit('https://a/1', 'CC-BY'), emit('https://a/2', 'CC0-1.0')])])
+    const args = { query: 'lion', intent: 'commercial-product' } as const
+    const out = await runSearch(args, d)
+    const def = createSearchTool(d) as unknown as WiredSearchTool
+    expect(def.output.render(args, out)).toEqual([{ type: 'text', text: renderSearch(out) }])
+    expect(narrowOutcome(def.output.presentationMeta(args, out))).toEqual(cardMeta(out))
+    expect(def.presentCall({ query: 'lion', intent: 'commercial-product' })).toEqual({ card: 'generic', title: 'refkit search', kind: 'search', rawInput: { query: 'lion', intent: 'commercial-product' } })
+    expect(def.presentResult(args, { content: [], isError: false, meta: cardMeta(out) }).title).toBe(`${out.count} refs for "lion"`)
+    expect(def.presentResult(args, { content: [], isError: false, meta: undefined }).title).toBe('refkit search')
   })
 })
 
@@ -84,6 +109,12 @@ describe('runSearch', () => {
   })
   it('maps an unknown sources id to an actionable error', async () => {
     await expect(runSearch({ query: 'x', sources: ['nope'] }, deps([provider('a', [])]))).rejects.toThrow(/nope.*Enabled source ids: a/)
+  })
+  it('rethrows a non-selection error unchanged when sources is set', async () => {
+    const err = await runSearch({ query: 'x', sources: ['a'], cursor: 'not-a-cursor' }, deps([provider('a', [])])).catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(Error)
+    expect((err as Error).message).toMatch(/invalid cursor/)
+    expect((err as Error).message).not.toContain('Enabled source ids')
   })
   it('names the settings card for a known but unconfigured keyed source', async () => {
     await expect(runSearch({ query: 'x', sources: ['unsplash'] }, deps([provider('a', [])]))).rejects.toThrow(/Settings -> Plugins -> refkit/)

@@ -60,7 +60,8 @@ function Tile({ tile }: { tile: RefTile }): ReactNode {
   const badge = tile.useVerdict ? verdictBadge(tile.useVerdict.decision) : null
   let media: ReactNode
   if (tile.modality === 'image' && image) {
-    media = <img src={image} alt={tile.title ?? ''} loading="lazy" referrerPolicy="no-referrer" />
+    // A hot-link-blocked thumbnail hides itself; the sized rk-media box and the title row remain.
+    media = <img src={image} alt={tile.title ?? ''} loading="lazy" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} />
   } else if (tile.modality === 'text') {
     media = <div className="rk-media-text">{tile.excerpt ?? tile.description ?? tile.title ?? COPY.untitled}</div>
   } else {
@@ -89,13 +90,14 @@ function Tile({ tile }: { tile: RefTile }): ReactNode {
 
 function Header({ outcome }: { outcome: SearchOutcome }): ReactNode {
   const { fulfilled, failed, skipped } = summarizeSources(outcome.sources)
+  const failedTitle = failed.map(s => outcome.warnings.find(w => w.startsWith(`${s.id}: `)) ?? s.id).join('\n')
   return (
     <>
       <div className="rk-head">
         <span className="rk-head-title">{COPY.refsFor(outcome.count, outcome.query)}</span>
         {outcome.intent && <span className="rk-head-meta">{COPY.intent(outcome.intent)}</span>}
         {fulfilled.map(s => <span key={s.id} className="rk-chip">{s.id}{s.returned !== undefined ? ` ${s.returned}` : ''}</span>)}
-        {failed.length > 0 && <span className="rk-chip rk-chip-muted" title={failed.map(s => s.id).join(', ')}>{COPY.failed(failed.length)}</span>}
+        {failed.length > 0 && <span className="rk-chip rk-chip-muted" title={failedTitle}>{COPY.failed(failed.length)}</span>}
         {skipped.length > 0 && <span className="rk-chip rk-chip-muted" title={skipped.map(s => `${s.id}${s.reason ? ` (${s.reason})` : ''}`).join(', ')}>{COPY.skipped(skipped.length)}</span>}
         {outcome.nextCursor && <span className="rk-head-meta">{COPY.more}</span>}
       </div>

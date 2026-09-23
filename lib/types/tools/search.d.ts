@@ -47,7 +47,7 @@ export declare const SEARCH_PARAMETERS: {
     };
     readonly limit: {
         readonly type: "integer";
-        readonly description: "Results to return, 1..30. Default from configuration (12).";
+        readonly description: "Results to return, 1..30. Default from configuration.";
     };
     readonly cursor: {
         readonly type: "string";

@@ -29,7 +29,7 @@ export const SEARCH_PARAMETERS = {
   intent: { type: 'string', enum: INTENTS, description: 'Annotate every result with a use-verdict (allowed / allowed-with-attribution / denied / needs-review) and a credit line for this intended use. No filtering.' },
   gateFor: { type: 'string', enum: INTENTS, description: 'Return only results whose license allows this intended use (also annotates). Prefer over intent when the user needs usable material only.' },
   sources: { type: 'array', items: { type: 'string' }, description: 'Restrict to provider ids (see the tool description). Omit to search every enabled source.' },
-  limit: { type: 'integer', description: 'Results to return, 1..30. Default from configuration (12).' },
+  limit: { type: 'integer', description: 'Results to return, 1..30. Default from configuration.' },
   cursor: { type: 'string', description: 'Opaque continuation from a previous result\'s nextCursor.' },
   controls: CONTROLS_PARAMETER,
   minRelevance: { type: 'number', description: 'Drop results the ranker scored below this (0..1) after reranking. A result matching no query term lands around 0.3 under the default weights, so 0.5 keeps only real matches. Off by default.' },
@@ -218,7 +218,11 @@ export async function runSearch(args: SearchArgs, deps: SearchDeps, signal?: Abo
         : err.errors.map((e: unknown, i: number) => `#${i + 1}: ${message(e)}`)
       throw new Error(`all ${err.errors.length} sources failed: ${parts.join('; ')}`)
     }
-    if (sources) throw sourcesError(err, sources, client.providers.map(p => p.id), cfg)
+    // Only core's selection miss gets the enabled-ids hint; an invalid cursor or
+    // an abort reason is rethrown as-is so its name and message survive.
+    if (sources && err instanceof Error && err.message.includes('no configured provider matches')) {
+      throw sourcesError(err, sources, client.providers.map(p => p.id), cfg)
+    }
     throw err
   }
 

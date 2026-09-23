@@ -44,6 +44,16 @@ describe('renderSearch', () => {
     expect(text).not.toContain('intent:')
     expect(text).not.toContain('more:')
   })
+  it('ends with a meta line cut to 2000 code points only when the value carries meta', () => {
+    const lines = renderSearch({ ...base, meta: { passes: 1, providers: [] } }).split('\n')
+    expect(lines[lines.length - 1].startsWith('meta: {"passes":1')).toBe(true)
+    expect(renderSearch(base).split('\n').some(l => l.startsWith('meta:'))).toBe(false)
+    const long = renderSearch({ ...base, meta: { blob: '𝄞'.repeat(3000) } }).split('\n')
+    const last = long[long.length - 1]
+    expect(last.startsWith('meta: {"blob":"')).toBe(true)
+    expect(Array.from(last).length).toBeLessThanOrEqual('meta: '.length + 2000)
+    expect(last.endsWith('…')).toBe(true)
+  })
 })
 
 describe('cardMeta', () => {
@@ -53,6 +63,15 @@ describe('cardMeta', () => {
     expect(meta.references[0].tags).toBeUndefined()
     expect(Array.from(meta.references[0].description ?? '').length).toBe(200)
     expect(meta.references[1].excerpt).toBe(base.references[1].excerpt)
+  })
+  it('cuts excerpts at 600 code points and leaves the canonical value untouched', () => {
+    const long = 'é𝄞'.repeat(500)
+    const value: SearchOutcome = { ...base, references: [base.references[0], { ...base.references[1], excerpt: long }] }
+    const meta = cardMeta(value)
+    expect(Array.from(meta.references[1].excerpt ?? '').length).toBe(600)
+    expect(meta.references[1].excerpt?.endsWith('…')).toBe(true)
+    expect(value.references[1].excerpt).toBe(long)
+    expect(Array.from(value.references[1].excerpt ?? '').length).toBe(1000)
   })
   it('contains no undefined-valued properties', () => {
     const meta = cardMeta(base)

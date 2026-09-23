@@ -7,7 +7,9 @@
 import { defined, trunc, type CardOutcome, type RefTile, type SearchOutcome } from './core/outcome.ts'
 
 const EXCERPT_CHARS = 160
+const META_CHARS = 2000
 const DESCRIPTION_CHARS = 200
+const CARD_EXCERPT_CHARS = 600
 
 /** Collapse whitespace runs (newlines included) so upstream text cannot break the line layout. */
 function oneLine(text: string): string {
@@ -18,7 +20,11 @@ function licenseLabel(tile: RefTile): string {
   return tile.licenseVersion ? `${tile.license} ${tile.licenseVersion}` : tile.license
 }
 
-/** One numbered line per reference plus credit/excerpt sub-lines, warnings and the cursor hint. */
+/**
+ * One numbered line per reference plus credit/excerpt sub-lines, warnings, the
+ * cursor hint and, with `explain`, a bounded `meta:` line — dsh sends the model
+ * only this text, never the canonical value.
+ */
 export function renderSearch(value: SearchOutcome): string {
   const lines: string[] = []
   lines.push(`${value.count} reference(s) for "${value.query}"${value.intent ? ` — intent: ${value.intent}` : ''}`)
@@ -32,14 +38,18 @@ export function renderSearch(value: SearchOutcome): string {
   if (value.note) lines.push(value.note)
   for (const warning of value.warnings) lines.push(`warning: ${warning}`)
   if (value.nextCursor) lines.push(`more: pass cursor "${value.nextCursor}" to continue`)
+  if (value.meta !== undefined) lines.push(`meta: ${trunc(JSON.stringify(value.meta), META_CHARS)}`)
   return lines.join('\n')
 }
 
-/** Bounded, replayable card data: no meta, no tags, descriptions cut, no undefined values. */
+/** Bounded, replayable card data: no meta, no tags, descriptions and excerpts cut, no undefined values. */
 export function cardMeta(value: SearchOutcome): CardOutcome {
   const references = value.references.map((tile) => {
-    const { tags: _tags, description, ...rest } = defined(tile)
-    return description === undefined ? rest : { ...rest, description: trunc(description, DESCRIPTION_CHARS) }
+    const { tags: _tags, description, excerpt, ...rest } = defined(tile)
+    const out: RefTile = rest
+    if (description !== undefined) out.description = trunc(description, DESCRIPTION_CHARS)
+    if (excerpt !== undefined) out.excerpt = trunc(excerpt, CARD_EXCERPT_CHARS)
+    return out
   })
   const out: CardOutcome = {
     query: value.query,

@@ -4,8 +4,12 @@
  * @module @refkit/dsh-plugin/render
  */
 import { type CardOutcome, type SearchOutcome } from './core/outcome.ts';
-/** One numbered line per reference plus credit/excerpt sub-lines, warnings and the cursor hint. */
+/**
+ * One numbered line per reference plus credit/excerpt sub-lines, warnings, the
+ * cursor hint and, with `explain`, a bounded `meta:` line — dsh sends the model
+ * only this text, never the canonical value.
+ */
 export declare function renderSearch(value: SearchOutcome): string;
-/** Bounded, replayable card data: no meta, no tags, descriptions cut, no undefined values. */
+/** Bounded, replayable card data: no meta, no tags, descriptions and excerpts cut, no undefined values. */
 export declare function cardMeta(value: SearchOutcome): CardOutcome;
 //# sourceMappingURL=render.d.ts.map
