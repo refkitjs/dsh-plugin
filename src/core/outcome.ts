@@ -80,6 +80,11 @@ function num(v: unknown): number | undefined {
   return typeof v === 'number' && Number.isFinite(v) ? v : undefined
 }
 
+/** Shallow copy of `obj` without its undefined-valued own properties (dsh snapshots values as lossless JSON). */
+export function defined<T extends object>(obj: T): T {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T
+}
+
 /** Cut `text` to `max` code points, appending an ellipsis when anything was removed. */
 export function trunc(text: string, max: number): string {
   const points = Array.from(text)

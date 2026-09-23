@@ -1,0 +1,104 @@
+import { describe, expect, it } from 'vitest'
+import { createRefkit, defineProvider, type EmittedReference, type LicenseId } from '@refkit/core'
+import { assertSupportedJsonSchema, parameterSchemaSpecToJsonSchema, valueSchemaSpecToJsonSchema } from '@deepseek-ai/dsh-tools'
+import { resolveConfig } from '../src/config.ts'
+import { SEARCH_OUTPUT, SEARCH_PARAMETERS, SEARCH_TOOL_NAME, createSearchTool, runSearch, type SearchDeps } from '../src/tools/search.ts'
+import { narrowOutcome } from '../src/core/outcome.ts'
+
+const emit = (url: string, license: LicenseId, extra: Partial<EmittedReference> = {}): EmittedReference => ({
+  modality: 'image',
+  title: `title ${url}`,
+  sourceUrl: url,
+  rights: { license, author: 'Ada', rehostPolicy: 'cache-allowed', raw: { sourceTerms: 't', sourceUrl: url } },
+  thumbnail: { url: `${url}/t.jpg` },
+  visual: { width: 800, height: 600 },
+  ...extra,
+})
+
+const provider = (id: string, refs: EmittedReference[]) =>
+  defineProvider({ id, modalities: ['image'], search: async () => refs })
+const failing = (id: string) =>
+  defineProvider({ id, modalities: ['image'], search: async () => { throw new Error('boom ' + 'x'.repeat(300)) } })
+
+function deps(providers: ReturnType<typeof defineProvider>[], config = resolveConfig({}, {})): SearchDeps {
+  const client = createRefkit({ providers, rerank: false, sourceConfidence: false, userAgent: false })
+  return { client: () => client, config: () => config }
+}
+
+describe('schemas', () => {
+  it('compile within the dsh enforced subset', () => {
+    expect(() => assertSupportedJsonSchema(parameterSchemaSpecToJsonSchema(SEARCH_PARAMETERS))).not.toThrow()
+    expect(() => assertSupportedJsonSchema(valueSchemaSpecToJsonSchema(SEARCH_OUTPUT))).not.toThrow()
+  })
+  it('defineTool accepts the definition', () => {
+    const def = createSearchTool(deps([provider('a', [emit('https://a/1', 'CC0-1.0')])]))
+    expect(def.name).toBe(SEARCH_TOOL_NAME)
+    expect(def.timeoutMs).toBe(15000 + 5000)
+  })
+})
+
+describe('runSearch', () => {
+  it('returns tiles with provenance and license and no undefined keys', async () => {
+    const out = await runSearch({ query: 'lion' }, deps([provider('a', [emit('https://a/1', 'CC-BY', { rights: { license: 'CC-BY', licenseVersion: '4.0', author: 'Ada', rehostPolicy: 'cache-allowed', raw: { sourceTerms: 't', sourceUrl: 'https://a/1' } } })])]))
+    expect(out.query).toBe('lion')
+    expect(out.modalities).toEqual(['image'])
+    expect(out.count).toBe(1)
+    const tile = out.references[0]
+    expect(tile).toMatchObject({ provider: 'a', canonicalUrl: 'https://a/1', license: 'CC-BY', licenseVersion: '4.0', author: 'Ada', thumbnail: 'https://a/1/t.jpg', width: 800, height: 600, title: 'title https://a/1' })
+    expect(tile.useVerdict).toBeUndefined()
+    expect(JSON.parse(JSON.stringify(out))).toEqual(out)
+    expect(out.sources).toEqual([{ id: 'a', status: 'fulfilled', returned: 1 }])
+    expect(narrowOutcome(out)).toEqual(out)
+  })
+  it('annotates a verdict and credit line when intent is set, without filtering', async () => {
+    const out = await runSearch({ query: 'lion', intent: 'commercial-product' }, deps([provider('a', [emit('https://a/1', 'CC-BY'), emit('https://a/2', 'CC-BY-NC')])]))
+    expect(out.intent).toBe('commercial-product')
+    expect(out.count).toBe(2)
+    const byUrl = Object.fromEntries(out.references.map(r => [r.canonicalUrl, r]))
+    expect(byUrl['https://a/1'].useVerdict?.decision).toBe('allowed-with-attribution')
+    expect(byUrl['https://a/1'].attribution).toContain('Ada')
+    expect(byUrl['https://a/2'].useVerdict?.decision).toBe('denied')
+    expect(byUrl['https://a/2'].attribution).toBeUndefined()
+  })
+  it('gateFor filters to allowed results and still annotates', async () => {
+    const out = await runSearch({ query: 'lion', gateFor: 'commercial-product' }, deps([provider('a', [emit('https://a/1', 'CC0-1.0'), emit('https://a/2', 'CC-BY-NC')])]))
+    expect(out.references.map(r => r.canonicalUrl)).toEqual(['https://a/1'])
+    expect(out.references[0].useVerdict?.decision).toBe('allowed')
+  })
+  it('defaults limit from config and clamps an oversized request', async () => {
+    const many = Array.from({ length: 40 }, (_, i) => emit(`https://a/${i}`, 'CC0-1.0'))
+    const d = deps([provider('a', many)], resolveConfig({ limit: 5 }, {}))
+    expect((await runSearch({ query: 'x' }, d)).count).toBe(5)
+    expect((await runSearch({ query: 'x', limit: 99 }, d)).count).toBe(30)
+  })
+  it('reports partial failure as a warning and a failed source, not an error', async () => {
+    const out = await runSearch({ query: 'x' }, deps([provider('a', [emit('https://a/1', 'CC0-1.0')]), failing('b')]))
+    expect(out.count).toBe(1)
+    expect(out.sources.find(s => s.id === 'b')?.status).toBe('failed')
+    expect(out.warnings.some(w => w.includes('b'))).toBe(true)
+    for (const w of out.warnings) expect(w.length).toBeLessThanOrEqual(260)
+  })
+  it('throws a bounded message when every source fails', async () => {
+    await expect(runSearch({ query: 'x' }, deps([failing('a'), failing('b')]))).rejects.toThrow(/all 2 sources failed: a: boom/)
+    await expect(runSearch({ query: 'x' }, deps([failing('a')]))).rejects.toSatisfy((e: Error) => e.message.length < 400)
+  })
+  it('maps an unknown sources id to an actionable error', async () => {
+    await expect(runSearch({ query: 'x', sources: ['nope'] }, deps([provider('a', [])]))).rejects.toThrow(/nope.*Enabled source ids: a/)
+  })
+  it('names the settings card for a known but unconfigured keyed source', async () => {
+    await expect(runSearch({ query: 'x', sources: ['unsplash'] }, deps([provider('a', [])]))).rejects.toThrow(/Settings -> Plugins -> refkit/)
+  })
+  it('sets the note on an empty result and rejects a blank query', async () => {
+    const out = await runSearch({ query: 'x' }, deps([provider('a', [])]))
+    expect(out.count).toBe(0)
+    expect(out.note).toMatch(/No results/)
+    await expect(runSearch({ query: '   ' }, deps([provider('a', [])]))).rejects.toThrow(/non-empty/)
+  })
+  it('includes core meta only with explain', async () => {
+    const d = deps([provider('a', [emit('https://a/1', 'CC0-1.0')])])
+    expect((await runSearch({ query: 'x' }, d)).meta).toBeUndefined()
+    const explained = await runSearch({ query: 'x', explain: true }, d)
+    expect((explained.meta as { passes: number }).passes).toBe(1)
+    expect(JSON.parse(JSON.stringify(explained))).toEqual(explained)
+  })
+})

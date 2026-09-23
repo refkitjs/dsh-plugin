@@ -63,6 +63,8 @@ export interface SearchOutcome {
 }
 /** What the card receives: the outcome minus `meta`, descriptions cut, tags dropped. */
 export type CardOutcome = Omit<SearchOutcome, 'meta'>;
+/** Shallow copy of `obj` without its undefined-valued own properties (dsh snapshots values as lossless JSON). */
+export declare function defined<T extends object>(obj: T): T;
 /** Cut `text` to `max` code points, appending an ellipsis when anything was removed. */
 export declare function trunc(text: string, max: number): string;
 /** Soft-narrow one tile; null for anything unusable. Unknown keys are dropped. */
