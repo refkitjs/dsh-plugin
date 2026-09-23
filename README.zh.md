@@ -8,7 +8,7 @@
 - **`refkit_rights`** — 针对不同的使用意图重新校验同一条许可证,无需重新搜索。
 - **网页卡片** — 缩略图网格;每个卡片都带许可证标签;绿 / 蓝 / 红 / 黄四色徽章分别对应 allowed(允许) / credit required(需署名) / not allowed(不允许) / needs review(需人工复核);一键复制署名文本。
 
-七个来源无需任何 key 即可使用。在 Settings → Plugins → refkit 中为其余来源添加免费 key。
+十一个来源无需任何密钥即可使用（Openverse、Met、Art Institute of Chicago、Wikimedia Commons、Rijksmuseum、Internet Archive、Project Gutenberg、PoetryDB、Poly Haven、ambientCG、nailbook）。其余来源在「设置 → 插件 → refkit」里填入免费密钥即可启用。
 
 ## 安装
 

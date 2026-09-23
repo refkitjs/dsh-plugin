@@ -8,7 +8,7 @@ English | [中文](README.zh.md)
 - **`refkit_rights`** — re-check one license for a different intent without searching again.
 - **Web card** — thumbnail grid; license chip on every tile; green / blue / red / amber badges for allowed / credit required / not allowed / needs review; one-click credit copy.
 
-Seven sources work with no key at all. Add free keys for the rest under Settings → Plugins → refkit.
+Eleven sources work with no key at all (Openverse, Met, Art Institute of Chicago, Wikimedia Commons, Rijksmuseum, Internet Archive, Project Gutenberg, PoetryDB, Poly Haven, ambientCG, nailbook). Add free keys for the rest under Settings → Plugins → refkit.
 
 ## Install
 
