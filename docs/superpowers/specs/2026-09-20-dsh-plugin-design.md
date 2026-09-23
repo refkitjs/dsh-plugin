@@ -134,11 +134,13 @@ Canonical output value (`additionalProperties: false` objects throughout):
 per reference `k. Title — provider — LICENSE[ vX] — decision — canonicalUrl`; an indented
 `credit: …` line when attribution is required; for `text` modality one indented excerpt line
 cut at 160 chars; then one line per warning and, when `nextCursor` is present, `more: pass
-cursor "…" to continue`. Bounded by `limit` ≤ 30.
+cursor "…" to continue`; when `explain` was set, a final `meta: <JSON>` line cut to 2000 code
+points (the canonical value is execution-local in dsh, so the model only ever sees rendered
+text). Bounded by `limit` ≤ 30.
 
 `presentationMeta`: `{ query, intent, count, references, sources, warnings, nextCursor }` with
-`description` cut at 200 chars and `tags` dropped — bounded, replayable, and exactly what the
-card consumes.
+`description` cut at 200 code points, `excerpt` cut at 600, and `tags` dropped — bounded,
+replayable, and exactly what the card consumes.
 
 `presentCall`: `{ card: 'generic', title: 'refkit search', kind: 'search', rawInput: { query,
 modalities, intent } }`. `presentResult`: generic card titled `N refs for "query"` with the
@@ -245,7 +247,7 @@ is present, "Copy credit" (`navigator.clipboard.writeText`; on failure the credi
 revealed as selectable text). The card issues no network requests of its own; thumbnails are
 provider-hosted URLs loaded by the browser.
 
-Styles are a CSS string (`src/client/styles.ts`) appended as one `<style data-refkit>` element to `document.head` the first time the card mounts (idempotent by the data attribute), all classes prefixed `rk-`, colours read the web shell's real alias tokens (`--dsw-alias-label-primary` / `-secondary` / `-tertiary` for text, `--dsw-alias-bg-base` for surfaces, `--dsw-alias-border-l1` / `-l2` for borders) with neutral fallbacks and a `prefers-color-scheme: dark` block; the root element's text colour falls back to `inherit` so the card never overrides the shell's theme when a token is absent. Pure helpers in
+Styles are a CSS string (`src/client/styles.ts`) appended as one `<style data-refkit-css>` element to `document.head` (or the document element) when the card module is evaluated, idempotent by the data attribute, all classes prefixed `rk-`, colours read the web shell's real alias tokens (`--dsw-alias-label-primary` / `-secondary` / `-tertiary` for text, `--dsw-alias-bg-base` for surfaces, `--dsw-alias-border-l1` / `-l2` for borders) with neutral fallbacks and a `prefers-color-scheme: dark` block; the root element's text colour falls back to `inherit` so the card never overrides the shell's theme when a token is absent. Pure helpers in
 `src/client/badges.ts` (verdict → class + label, license label shortening) are unit-tested
 without a DOM.
 
