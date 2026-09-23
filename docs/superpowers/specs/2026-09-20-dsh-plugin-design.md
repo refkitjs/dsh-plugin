@@ -219,7 +219,8 @@ Registered in `src/client/index.tsx` via `ctx.inject(['slots'], scope => scope.s
 'tool.call.toolview', () => scope.slots.register({ name: 'tool.call.toolview', key:
 'refkit_search', priority: 0, registrant: '@refkit/dsh-plugin' }, RefkitCard)))`. Every wiring
 step is wrapped in try/catch and logged, never thrown (a throwing client `apply` fails the
-whole web shell boot).
+whole web shell boot) — including the deferred `slots.inject` callback, which the platform may
+run later inside the declaring package's own `register()` call.
 
 `RefkitCard(props: ToolCallOwnerProps)`:
 
@@ -244,8 +245,7 @@ is present, "Copy credit" (`navigator.clipboard.writeText`; on failure the credi
 revealed as selectable text). The card issues no network requests of its own; thumbnails are
 provider-hosted URLs loaded by the browser.
 
-Styles are a CSS string (`src/client/styles.ts`) appended as one `<style data-refkit>` element to `document.head` the first time the card mounts (idempotent by the data attribute), all classes prefixed `rk-`,
-colours via CSS variables with light and `prefers-color-scheme: dark` values. Pure helpers in
+Styles are a CSS string (`src/client/styles.ts`) appended as one `<style data-refkit>` element to `document.head` the first time the card mounts (idempotent by the data attribute), all classes prefixed `rk-`, colours read the web shell's real alias tokens (`--dsw-alias-label-primary` / `-secondary` / `-tertiary` for text, `--dsw-alias-bg-base` for surfaces, `--dsw-alias-border-l1` / `-l2` for borders) with neutral fallbacks and a `prefers-color-scheme: dark` block; the root element's text colour falls back to `inherit` so the card never overrides the shell's theme when a token is absent. Pure helpers in
 `src/client/badges.ts` (verdict → class + label, license label shortening) are unit-tested
 without a DOM.
 
