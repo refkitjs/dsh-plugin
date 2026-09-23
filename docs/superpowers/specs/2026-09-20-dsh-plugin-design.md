@@ -292,9 +292,11 @@ Vitest, in-process, no network in CI.
   attribution text present iff required.
 - `core/outcome`: `narrowOutcome` accepts a full value, drops malformed tiles, returns null for
   the wrong shape. `client/badges`: verdict mapping, license shortening.
-- Build shape: after `pnpm build`, `lib/client.js` starts with
-  `window.__ModuleLoader__.load({ id: "@refkit/dsh-plugin"` and `lib/index.js` exports
-  `apply`, `inject`, `name`, `Config`.
+- Build shape: after `pnpm build`, `lib/client.js` starts with the loader banner
+  `window.__ModuleLoader__.load({ id: "@refkit/dsh-plugin", factory: (require) => {` (compared
+  with whitespace collapsed — Rolldown re-wraps it, as it does in dsh's own client bundles) and
+  ends with the footer before the source-map comment; `lib/index.js` exports `apply`, `inject`,
+  `name`, `Config`.
 - `scripts/smoke-host.mjs` (manual, env-gated): mount `apply` on a real `@deepseek-ai/cordis`
   Context with a stub `tools` registry, run one live Openverse search, print the render text.
 - Manual acceptance before each release: `dsh plugin --profile web add file:<repo>`, restart the

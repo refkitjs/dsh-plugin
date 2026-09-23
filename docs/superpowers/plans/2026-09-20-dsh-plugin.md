@@ -2518,8 +2518,8 @@ export function apply(ctx: ClientContext): void {
 
 - [ ] **Step 8: Build and verify the client bundle shape**
 
-Run: `pnpm typecheck && pnpm lint && pnpm test && pnpm build && head -c 120 lib/client.js && echo && grep -c '"refkit_search"' lib/client.js`
-Expected: typecheck (host + client programs) silent; `lib/client.js` begins with `window.__ModuleLoader__.load({ id: "@refkit/dsh-plugin", factory: (require) => {`; the grep prints at least `1`. If tsdown's purity plugin throws on an `@deepseek-ai/*` value import, that import must become `import type`.
+Run: `pnpm typecheck && pnpm lint && pnpm test && pnpm build && head -c 200 lib/client.js && echo && grep -c '"refkit_search"' lib/client.js`
+Expected: typecheck (host + client programs) silent; `lib/client.js` begins with the loader banner `window.__ModuleLoader__.load({ id: "@refkit/dsh-plugin", factory: (require) => {` (Rolldown may re-wrap it across lines — compare with whitespace collapsed); the grep prints at least `1`. If tsdown's purity plugin throws on an `@deepseek-ai/*` value import, that import must become `import type`.
 
 - [ ] **Step 9: Commit**
 
@@ -2548,9 +2548,13 @@ git commit -m "feat(client): refkit_search card — thumbnail grid with license 
 import { readFileSync } from 'node:fs'
 
 const js = readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8')
-const banner = 'window.__ModuleLoader__.load({ id: "@refkit/dsh-plugin", factory: (require) => {'
-if (!js.startsWith(banner)) { console.error('client bundle: missing loader banner'); process.exit(1) }
-if (!js.trimEnd().endsWith('return module.exports; } });')) { console.error('client bundle: missing loader footer'); process.exit(1) }
+// Rolldown re-wraps the banner/footer across lines, so compare with whitespace
+// collapsed; the trailing //# sourceMappingURL line sits after the footer.
+const squash = (s) => s.replace(/\s+/g, ' ').trim()
+const body = squash(js.replace(/\/\/# sourceMappingURL=.*$/m, ''))
+const banner = squash('window.__ModuleLoader__.load({ id: "@refkit/dsh-plugin", factory: (require) => {')
+if (!body.startsWith(banner)) { console.error('client bundle: missing loader banner'); process.exit(1) }
+if (!body.endsWith(squash('return module.exports; } });'))) { console.error('client bundle: missing loader footer'); process.exit(1) }
 if (!js.includes('"refkit_search"')) { console.error('client bundle: slot key not found'); process.exit(1) }
 const forbidden = [...js.matchAll(/require\("(@deepseek-ai\/[^"]+)"\)/g)].map(m => m[1])
 const allowed = new Set(['@deepseek-ai/cordis', '@deepseek-ai/dsh-client-ui-slots', '@deepseek-ai/dsh-client-web-react', '@deepseek-ai/dsh-client-ui-primitives', '@deepseek-ai/dsh-client-schema-form', '@deepseek-ai/dsh-client-runtime/client'])
@@ -2558,6 +2562,10 @@ const bad = forbidden.filter(id => !allowed.has(id))
 if (bad.length > 0) { console.error('client bundle: non-platform requires', bad); process.exit(1) }
 console.log('client bundle ok', js.length, 'bytes')
 ```
+
+- [ ] **Step 1b: Silence tsdown's CommonJS notice for the client bundle**
+
+In `tsdown.config.ts` `clientConfig()`, add `checks: { legacyCjs: false }` next to `format: 'cjs'` with the comment `// dsh's module loader consumes a CJS closure factory by contract.` — the browser bundle is CJS on purpose and the notice would otherwise print on every build. The gate requires a build with no warnings.
 
 - [ ] **Step 2: Write `scripts/smoke-host.mjs`**
 
