@@ -49,6 +49,8 @@ function clientConfig(): UserConfig {
     entry: { client: 'src/client/index.tsx' },
     outDir: 'lib',
     format: 'cjs',
+    // dsh's module loader consumes a CJS closure factory by contract.
+    checks: { legacyCjs: false },
     platform: 'browser',
     dts: false,
     sourcemap: true,

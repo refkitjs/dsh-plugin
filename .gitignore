@@ -2,3 +2,4 @@ node_modules/
 .superpowers/
 *.tgz
 .DS_Store
+lib/*.tsbuildinfo
