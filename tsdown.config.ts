@@ -39,7 +39,7 @@ function hostConfig(): UserConfig {
     fixedExtension: false,
     dts: false,
     clean: false,
-    external: [...HOST_EXTERNAL],
+    deps: { neverBundle: [...HOST_EXTERNAL] },
   }
 }
 

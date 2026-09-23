@@ -67,8 +67,6 @@ export interface ProviderEntry {
     modalities: Modality[];
     /** The secret field that enables this entry; undefined = keyless. */
     key?: KeyField;
-    /** For N+1 sources: the per-search detail-fetch cap derived from config. */
-    detailCap?: (cfg: ResolvedConfig) => number;
     make: (cfg: ResolvedConfig) => ReferenceProvider;
 }
 export declare const PROVIDER_REGISTRY: readonly ProviderEntry[];

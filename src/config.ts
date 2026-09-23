@@ -165,8 +165,6 @@ export interface ProviderEntry {
   modalities: Modality[]
   /** The secret field that enables this entry; undefined = keyless. */
   key?: KeyField
-  /** For N+1 sources: the per-search detail-fetch cap derived from config. */
-  detailCap?: (cfg: ResolvedConfig) => number
   make: (cfg: ResolvedConfig) => ReferenceProvider
 }
 
@@ -181,7 +179,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   { id: 'gutendex', modalities: ['text'], make: () => gutendex() },
   { id: 'internet-archive', modalities: ['video', 'text'], make: () => internetArchive() },
   { id: 'jamendo', modalities: ['audio'], key: 'jamendoClientId', make: cfg => jamendo({ clientId: k(cfg, 'jamendoClientId') }) },
-  { id: 'met', modalities: ['image'], detailCap: cfg => cfg.limit, make: cfg => met({ maxObjects: cfg.limit }) },
+  { id: 'met', modalities: ['image'], make: cfg => met({ maxObjects: cfg.limit }) },
   { id: 'nailbook', modalities: ['image'], make: () => nailbook() },
   { id: 'openverse', modalities: ['image'], make: cfg => openverse(cfg.keys.openverseToken ? { token: cfg.keys.openverseToken } : {}) },
   { id: 'openverse-audio', modalities: ['audio'], make: cfg => openverseAudio(cfg.keys.openverseToken ? { token: cfg.keys.openverseToken } : {}) },
@@ -190,9 +188,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   { id: 'pixabay', modalities: ['image'], key: 'pixabayKey', make: cfg => pixabay({ key: k(cfg, 'pixabayKey') }) },
   { id: 'pixabay-video', modalities: ['video'], key: 'pixabayKey', make: cfg => pixabayVideo({ key: k(cfg, 'pixabayKey') }) },
   { id: 'poetrydb', modalities: ['text'], make: () => poetrydb() },
-  { id: 'polyhaven', modalities: ['image'], detailCap: cfg => cfg.limit, make: cfg => polyhaven({ maxAssets: cfg.limit }) },
+  { id: 'polyhaven', modalities: ['image'], make: cfg => polyhaven({ maxAssets: cfg.limit }) },
   { id: 'ambientcg', modalities: ['image'], make: cfg => ambientcg({ limit: cfg.limit }) },
-  { id: 'rijksmuseum', modalities: ['image'], detailCap: cfg => cfg.limit, make: cfg => rijksmuseum({ maxObjects: cfg.limit }) },
+  { id: 'rijksmuseum', modalities: ['image'], make: cfg => rijksmuseum({ maxObjects: cfg.limit }) },
   { id: 'smithsonian', modalities: ['image'], key: 'smithsonianApiKey', make: cfg => smithsonian({ apiKey: k(cfg, 'smithsonianApiKey') }) },
   { id: 'unsplash', modalities: ['image'], key: 'unsplashAccessKey', make: cfg => unsplash({ accessKey: k(cfg, 'unsplashAccessKey') }) },
   { id: 'wikimedia-commons', modalities: ['image'], make: () => wikimediaCommons() },
