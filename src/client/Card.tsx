@@ -114,7 +114,7 @@ function Header({ outcome }: { outcome: SearchOutcome }): ReactNode {
 
 /** The slot component: dispatch by block lifecycle, degrade safely. */
 export function RefkitCard(props: ToolCallOwnerProps): ReactNode {
-  const { block } = props
+  const block: ToolCallBlock = props.block
   if (!('kind' in block)) return <RunningGrid />
   if (block.isError) {
     const text = textOf(block)

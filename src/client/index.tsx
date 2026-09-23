@@ -17,11 +17,18 @@ export function apply(ctx: ClientContext): void {
   try {
     ctx.inject(['slots'], (scope) => {
       try {
-        scope.slots.inject('tool.call.toolview', () =>
-          scope.slots.register(
-            { name: 'tool.call.toolview', key: 'refkit_search', priority: 0, registrant: '@refkit/dsh-plugin' },
-            RefkitCard,
-          ))
+        scope.slots.inject('tool.call.toolview', () => {
+          // May run later, inside the declaring register() call — guard it here too.
+          try {
+            return scope.slots.register(
+              { name: 'tool.call.toolview', key: 'refkit_search', priority: 0, registrant: '@refkit/dsh-plugin' },
+              RefkitCard,
+            )
+          } catch (error) {
+            console.warn('[refkit] toolview registration failed', error)
+            return () => {}
+          }
+        })
       } catch (error) {
         console.warn('[refkit] toolview registration failed', error)
       }
