@@ -142,7 +142,7 @@ card consumes.
 
 `presentCall`: `{ card: 'generic', title: 'refkit search', kind: 'search', rawInput: { query,
 modalities, intent } }`. `presentResult`: generic card titled `N refs for "query"` with the
-rendered content. `timeoutMs = cfg.deadlineMs + 5000`. `isConcurrencySafe: () => true`.
+rendered content. `timeoutMs` is the constant `65000` (the configurable `deadlineMs` maximum of 60000 plus 5000): dsh fixes a tool's cooperative timeout at registration, while `deadlineMs` is read live from settings on every call, so the tool-level timeout is only a backstop and core enforces the real deadline. `isConcurrencySafe: () => true`.
 
 #### `refkit_rights`
 
