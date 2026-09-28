@@ -1,5 +1,5 @@
 {
   "extends": "./tsconfig.host.json",
   "compilerOptions": { "composite": false, "declaration": false, "declarationMap": false, "emitDeclarationOnly": false, "noEmit": true, "rootDir": ".", "types": ["node"] },
-  "include": ["src/index.ts", "src/config.ts", "src/render.ts", "src/tools/**/*.ts", "src/core/**/*.ts", "src/client/badges.ts", "src/client/copy.ts", "tests/**/*.ts"]
+  "include": ["src/index.ts", "src/config.ts", "src/render.ts", "src/tools/**/*.ts", "src/core/**/*.ts", "src/client/badges.ts", "src/client/copy.ts", "src/client/settings-model.ts", "tests/**/*.ts"]
 }
