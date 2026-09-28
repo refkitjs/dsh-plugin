@@ -5,7 +5,7 @@ import { polyhaven } from '@refkit/provider-polyhaven'
 import { rijksmuseum } from '@refkit/provider-rijksmuseum'
 import {
   Config, DEFAULTS, KEY_ENV, KEY_FIELDS, KEYLESS_IDS, PLUGIN_VERSION, PROVIDER_IDS, PROVIDER_REGISTRY,
-  buildClient, enabledProviders, resolveConfig, validateConfig,
+  buildClient, enabledProviders, readConfig, resolveConfig,
 } from '../src/config.ts'
 
 // The three N+1 sources' factories are wrapped in spies that still call the real
@@ -126,36 +126,42 @@ describe('enabledProviders', () => {
   })
 })
 
-describe('validateConfig', () => {
-  it('rejects an unknown source id naming the valid ids', () => {
-    expect(() => validateConfig({ sources: ['unsplsh'] })).toThrow(/unsplsh.*valid ids/i)
+describe('sources schema', () => {
+  it('rejects an unknown source id, naming the valid ids', () => {
+    expect(() => Config({ sources: ['unsplsh'] })).toThrow(/unsplsh/)
+    expect(() => Config({ sources: ['unsplsh'] })).toThrow(/wikimedia-commons/)
   })
-  it('accepts an empty config and known ids', () => {
-    expect(() => validateConfig({})).not.toThrow()
-    expect(() => validateConfig({ sources: ['met', 'unsplash'] })).not.toThrow()
+  it('accepts known ids', () => {
+    expect(() => Config({ sources: ['met', 'unsplash'] })).not.toThrow()
   })
 })
 
 describe('Config schema', () => {
-  it('applies schemastery defaults', () => {
-    const value = new Config({}) as Record<string, unknown>
-    expect(value.limit).toBe(12)
-    expect(value.poolFactor).toBe(2)
-    expect(value.sources).toEqual([])
+  it('readConfig snapshots the defaults from an empty entry', () => {
+    const values = readConfig(Config({}))
+    expect(values).toMatchObject({ sources: [], limit: 12, poolFactor: 2, deadlineMs: 15000, timeoutMs: 10000, rerank: true, sourceConfidence: true })
+    for (const field of KEY_FIELDS) expect(values[field], field).toBeUndefined()
   })
-  it('marks exactly the KEY_FIELDS secret in the serialized schema', () => {
+  it('exposes every field as a live reference', () => {
+    const config = Config({})
+    expect(Object.keys(config)).toHaveLength(18)
+    expect(Object.values(config).every(r => typeof (r as { get?: unknown }).get === 'function')).toBe(true)
+  })
+  it('marks exactly the KEY_FIELDS secret and all 18 fields volatile in the serialized schema', () => {
     // toJSON() is a ref table: refs[uid] is the object node whose dict maps field -> ref id
-    const json = Config.toJSON() as unknown as { uid: number; refs: Record<string, { dict?: Record<string, number>; meta?: { role?: string } }> }
+    const json = Config.toJSON() as unknown as { uid: number; refs: Record<string, { dict?: Record<string, number>; meta?: { role?: string; volatile?: boolean } }> }
     const dict = json.refs[json.uid].dict!
-    const roleOf = (field: string) => json.refs[dict[field]]?.meta?.role
-    for (const field of KEY_FIELDS) expect(roleOf(field), field).toBe('secret')
-    const secretFields = Object.keys(dict).filter(field => roleOf(field) === 'secret')
+    const metaOf = (field: string) => json.refs[dict[field]]?.meta
+    for (const field of KEY_FIELDS) expect(metaOf(field)?.role, field).toBe('secret')
+    const secretFields = Object.keys(dict).filter(field => metaOf(field)?.role === 'secret')
     expect(secretFields.sort()).toEqual([...KEY_FIELDS].sort())
+    expect(Object.keys(dict)).toHaveLength(18)
+    for (const field of Object.keys(dict)) expect(metaOf(field)?.volatile, field).toBe(true)
   })
   it('rejects out-of-range numbers', () => {
-    expect(() => new Config({ limit: 0 })).toThrow()
-    expect(() => new Config({ poolFactor: 9 })).toThrow()
-    expect(() => new Config({ deadlineMs: 10 })).toThrow()
+    expect(() => Config({ limit: 0 })).toThrow()
+    expect(() => Config({ poolFactor: 9 })).toThrow()
+    expect(() => Config({ deadlineMs: 10 })).toThrow()
   })
 })
 

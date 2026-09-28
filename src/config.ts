@@ -1,11 +1,13 @@
 /**
- * Plugin configuration: the schemastery schema (doubles as the Settings ->
- * Plugins -> refkit card), environment fallbacks shared with @refkit/mcp's
- * CLI, the static registry of the 23 provider factories, and the
- * RefkitClient factory. Secrets are read here and nowhere else.
+ * Plugin configuration: the schemastery schema (every field volatile, so the
+ * Host projects it as the `refkit` settings namespace and commits edits into
+ * live references), environment fallbacks shared with @refkit/mcp's CLI, the
+ * static registry of the 23 provider factories, and the RefkitClient factory.
+ * Secrets are read here and nowhere else.
  * @module @refkit/dsh-plugin/config
  */
 
+import type { Volatile } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { createRefkit, type ReferenceProvider, type RefkitClient, type RefkitOptions } from '@refkit/core'
 import { artic } from '@refkit/provider-artic'
@@ -30,7 +32,7 @@ import { wikimediaCommons } from '@refkit/provider-wikimedia-commons'
 import type { Modality } from './core/outcome.ts'
 
 /** Kept in sync with package.json by tests/config.test.ts. */
-export const PLUGIN_VERSION = '0.1.0'
+export const PLUGIN_VERSION = '0.2.0'
 
 export const KEY_FIELDS = [
   'unsplashAccessKey', 'pexelsApiKey', 'pixabayKey', 'flickrApiKey', 'smithsonianApiKey',
@@ -64,8 +66,8 @@ export const DEFAULTS = {
   sourceConfidence: true,
 } as const
 
-/** Deployment configuration; every field optional so an unconfigured mount loads silently. */
-export interface Config {
+/** Plain settings values: what each reference's `.get()` returns. Every field optional so an unconfigured mount loads silently. */
+export interface ConfigValues {
   unsplashAccessKey?: string
   pexelsApiKey?: string
   pixabayKey?: string
@@ -77,7 +79,7 @@ export interface Config {
   europeanaApiKey?: string
   openverseToken?: string
   /** Provider ids to enable; empty = every source whose key is present. */
-  sources?: string[]
+  sources?: readonly string[]
   limit?: number
   poolFactor?: number
   deadlineMs?: number
@@ -86,30 +88,6 @@ export interface Config {
   sourceConfidence?: boolean
   userAgent?: string
 }
-
-const secret = (text: string) => z.string().role('secret').description(text)
-
-/** Schemastery schema; also the `refkit` settings-section schema. */
-export const Config: z<Config> = z.object({
-  unsplashAccessKey: secret('Unsplash access key (free at unsplash.com/developers). Empty disables unsplash. Env: REFKIT_UNSPLASH_KEY / UNSPLASH_KEY.'),
-  pexelsApiKey: secret('Pexels API key (free at pexels.com/api). Enables pexels and pexels-video. Env: REFKIT_PEXELS_KEY / PEXELS_KEY.'),
-  pixabayKey: secret('Pixabay API key (free at pixabay.com/api/docs). Enables pixabay and pixabay-video. Env: REFKIT_PIXABAY_KEY / PIXABAY_KEY.'),
-  flickrApiKey: secret('Flickr API key. Env: REFKIT_FLICKR_KEY / FLICKR_KEY.'),
-  smithsonianApiKey: secret('api.data.gov key for the Smithsonian Open Access API. Env: REFKIT_SMITHSONIAN_KEY / SI_KEY.'),
-  braveToken: secret('Brave Search API token (web image discovery). Env: REFKIT_BRAVE_KEY / BRAVE_TOKEN.'),
-  freesoundToken: secret('Freesound APIv2 token. Env: REFKIT_FREESOUND_KEY / FREESOUND_TOKEN.'),
-  jamendoClientId: secret('Jamendo client id. Env: REFKIT_JAMENDO_CLIENT_ID / JAMENDO_CLIENT_ID.'),
-  europeanaApiKey: secret('Europeana API key (free). Env: REFKIT_EUROPEANA_KEY / EUROPEANA_KEY.'),
-  openverseToken: secret('Optional Openverse OAuth2 token; anonymous works with lower rate limits. Env: REFKIT_OPENVERSE_TOKEN.'),
-  sources: z.array(z.string()).default([]).description('Provider ids to enable (empty = every source whose key is present).'),
-  limit: z.number().step(1).min(1).max(30).default(DEFAULTS.limit).description('Default results per call; also caps per-item detail fetches for met, rijksmuseum and polyhaven.'),
-  poolFactor: z.number().step(1).min(1).max(4).default(DEFAULTS.poolFactor).description('Rank-fusion pool multiplier.'),
-  deadlineMs: z.number().step(1).min(1000).max(MAX_DEADLINE_MS).default(DEFAULTS.deadlineMs).description('Whole-search deadline in ms.'),
-  timeoutMs: z.number().step(1).min(1000).max(60000).default(DEFAULTS.timeoutMs).description('Per-source timeout in ms.'),
-  rerank: z.boolean().default(DEFAULTS.rerank).description('Rerank fused results lexically over title, description, tags and excerpt.'),
-  sourceConfidence: z.boolean().default(DEFAULTS.sourceConfidence).description('Down-weight sources whose batch never mentions the query.'),
-  userAgent: z.string().description('User-Agent for provider requests. Default refkit-dsh-plugin/<version>.'),
-})
 
 export interface ResolvedConfig {
   keys: Record<KeyField, string | undefined>
@@ -133,8 +111,8 @@ function clampInt(value: number | undefined, fallback: number, min: number, max:
   return Math.min(max, Math.max(min, n))
 }
 
-/** Resolve raw config plus environment into validated facts with defaults. */
-export function resolveConfig(config: Config, env: NodeJS.ProcessEnv = process.env): ResolvedConfig {
+/** Resolve plain settings values plus environment into validated facts with defaults. */
+export function resolveConfig(config: ConfigValues, env: NodeJS.ProcessEnv = process.env): ResolvedConfig {
   const keys = {} as Record<KeyField, string | undefined>
   for (const field of KEY_FIELDS) {
     let value = nonEmpty(config[field])
@@ -199,20 +177,52 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
 export const PROVIDER_IDS: readonly string[] = PROVIDER_REGISTRY.map(e => e.id)
 export const KEYLESS_IDS: readonly string[] = PROVIDER_REGISTRY.filter(e => e.key === undefined).map(e => e.id)
 
+const secret = (text: string) => z.string().role('secret').description(text).volatile()
+
+/**
+ * Schemastery schema. Every field is volatile: a settings edit commits into the
+ * same references and emits `loader/volatile-update` instead of remounting the
+ * plugin. An unknown `sources` id fails validation, so the Host refuses the write.
+ */
+export const Config = z.object({
+  unsplashAccessKey: secret('Unsplash access key (free at unsplash.com/developers). Empty disables unsplash. Env: REFKIT_UNSPLASH_KEY / UNSPLASH_KEY.'),
+  pexelsApiKey: secret('Pexels API key (free at pexels.com/api). Enables pexels and pexels-video. Env: REFKIT_PEXELS_KEY / PEXELS_KEY.'),
+  pixabayKey: secret('Pixabay API key (free at pixabay.com/api/docs). Enables pixabay and pixabay-video. Env: REFKIT_PIXABAY_KEY / PIXABAY_KEY.'),
+  flickrApiKey: secret('Flickr API key. Env: REFKIT_FLICKR_KEY / FLICKR_KEY.'),
+  smithsonianApiKey: secret('api.data.gov key for the Smithsonian Open Access API. Env: REFKIT_SMITHSONIAN_KEY / SI_KEY.'),
+  braveToken: secret('Brave Search API token (web image discovery). Env: REFKIT_BRAVE_KEY / BRAVE_TOKEN.'),
+  freesoundToken: secret('Freesound APIv2 token. Env: REFKIT_FREESOUND_KEY / FREESOUND_TOKEN.'),
+  jamendoClientId: secret('Jamendo client id. Env: REFKIT_JAMENDO_CLIENT_ID / JAMENDO_CLIENT_ID.'),
+  europeanaApiKey: secret('Europeana API key (free). Env: REFKIT_EUROPEANA_KEY / EUROPEANA_KEY.'),
+  openverseToken: secret('Optional Openverse OAuth2 token; anonymous works with lower rate limits. Env: REFKIT_OPENVERSE_TOKEN.'),
+  sources: z.array(z.union(PROVIDER_IDS)).default([]).description('Provider ids to enable (empty = every source whose key is present).').volatile(),
+  limit: z.number().step(1).min(1).max(30).default(DEFAULTS.limit).description('Default results per call; also caps per-item detail fetches for met, rijksmuseum and polyhaven.').volatile(),
+  poolFactor: z.number().step(1).min(1).max(4).default(DEFAULTS.poolFactor).description('Rank-fusion pool multiplier.').volatile(),
+  deadlineMs: z.number().step(1).min(1000).max(MAX_DEADLINE_MS).default(DEFAULTS.deadlineMs).description('Whole-search deadline in ms.').volatile(),
+  timeoutMs: z.number().step(1).min(1000).max(60000).default(DEFAULTS.timeoutMs).description('Per-source timeout in ms.').volatile(),
+  rerank: z.boolean().default(DEFAULTS.rerank).description('Rerank fused results lexically over title, description, tags and excerpt.').volatile(),
+  sourceConfidence: z.boolean().default(DEFAULTS.sourceConfidence).description('Down-weight sources whose batch never mentions the query.').volatile(),
+  userAgent: z.string().description('User-Agent for provider requests. Default refkit-dsh-plugin/<version>.').volatile(),
+})
+
+/** Config as `apply` receives it: every field a live Loader reference. */
+export type Config = { readonly [K in keyof ConfigValues]-?: Volatile<ConfigValues[K]> }
+
+// The hand-written Config type and the schema output must agree.
+const _schemaCheck: Config = {} as ReturnType<typeof Config>
+void _schemaCheck
+
+/** One consistent snapshot; the Loader commits every reference before it emits the event. */
+export function readConfig(config: Config): ConfigValues {
+  return Object.fromEntries(Object.entries(config).map(([key, ref]) => [key, (ref as Volatile<unknown>).get()])) as ConfigValues
+}
+
 /** Providers that are keyless or keyed-and-configured, intersected with the whitelist, in registry order. */
 export function enabledProviders(cfg: ResolvedConfig): ReferenceProvider[] {
   const allow = cfg.sources.length > 0 ? new Set(cfg.sources) : null
   return PROVIDER_REGISTRY
     .filter(e => (e.key === undefined || cfg.keys[e.key] !== undefined) && (allow === null || allow.has(e.id)))
     .map(e => e.make(cfg))
-}
-
-/** Constraints the schema cannot express; throwing refuses the settings write. */
-export function validateConfig(config: Config): void {
-  const unknown = (config.sources ?? []).filter(id => !PROVIDER_IDS.includes(id))
-  if (unknown.length > 0) {
-    throw new Error(`refkit: unknown source id(s) ${unknown.join(', ')}; valid ids: ${PROVIDER_IDS.join(', ')}`)
-  }
 }
 
 /** Build the RefkitClient for one resolved configuration. */

@@ -4,7 +4,7 @@
  * fails the whole boot when a plugin apply throws.
  * @module @refkit/dsh-plugin/client
  */
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client';
+import type { Context as ClientContext } from '@deepseek-ai/cordis';
 export declare const name = "refkit-client";
 export declare const inject: string[];
 export declare function apply(ctx: ClientContext): void;

@@ -1,21 +1,40 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { ToolDefinition } from '@deepseek-ai/dsh-tools'
-import { GUIDANCE, apply, applyWith, inject, name } from '../src/index.ts'
+import type { RefkitClient, RefkitOptions } from '@refkit/core'
+import { Config, GUIDANCE, apply, applyWith, inject, name, type ConfigValues } from '../src/index.ts'
 
-interface FakeSettings {
-  installSection: (owner: unknown, ns: string, schema: unknown, entry: unknown, hooks: { setSource(c: () => unknown): void; onChange(): void; validate?: (v: unknown) => void }) => void
+type Listener = (...args: unknown[]) => void
+
+interface FakeServices {
+  settings?: { configure: (policy: { auto?: boolean }, owner?: unknown) => () => void }
+  systemPrompt?: { section: (s: { name: string; order: number; text: string }) => () => void }
 }
 
-function fakeContext(services: { settings?: FakeSettings; systemPrompt?: { section: (s: { name: string; order: number; text: string }) => () => void } } = {}) {
+/** A Cordis-shaped context: optional-service inject children, and `on`/`emit` for Loader events. */
+function fakeContext(services: FakeServices = {}) {
   const registered: ToolDefinition[] = []
+  const listeners = new Map<string, Listener[]>()
   const ctx = {
     inject(deps: string[], cb: (scope: unknown) => void) {
-      if (deps.every(d => d in services)) cb({ ...services })
+      if (deps.every(d => d in services)) cb({ ...services, effect: (fn: () => unknown) => fn() })
     },
     effect: () => () => {},
+    on(event: string, fn: Listener) {
+      listeners.set(event, [...(listeners.get(event) ?? []), fn])
+      return () => {}
+    },
     tools: { register: (def: ToolDefinition) => { registered.push(def); return () => {} } },
   }
-  return { ctx, registered }
+  const emit = (event: string, ...args: unknown[]): void => {
+    for (const fn of listeners.get(event) ?? []) fn(...args)
+  }
+  return { ctx, registered, emit }
+}
+
+/** Live references whose `.get()` reads whatever `get()` returns now, like the Loader's committed values. */
+function liveConfig(get: () => ConfigValues): Config {
+  const fields = Object.keys(Config({})) as (keyof ConfigValues)[]
+  return Object.fromEntries(fields.map(field => [field, { get: () => get()[field] }])) as unknown as Config
 }
 
 describe('plugin entry', () => {
@@ -25,49 +44,49 @@ describe('plugin entry', () => {
   })
   it('registers both tools with no optional services mounted', () => {
     const { ctx, registered } = fakeContext()
-    apply(ctx as never, {})
+    apply(ctx as never, Config({}))
     expect(registered.map(d => d.name).sort()).toEqual(['refkit_rights', 'refkit_search'])
   })
-  it('installs the settings section under the refkit namespace and rebuilds the client on change', async () => {
-    let hooks: Parameters<FakeSettings['installSection']>[4] | undefined
-    let ns: string | undefined
-    const settings: FakeSettings = { installSection: (_o, n, _s, _e, h) => { ns = n; hooks = h } }
-    const { ctx } = fakeContext({ settings })
-    const built: string[][] = []
-    const handles = applyWith(ctx as never, {}, {
-      createClient: (opts) => { built.push(opts.providers.map(p => p.id)); return { providers: opts.providers } as never },
-      env: {},
-    })
-    expect(ns).toBe('refkit')
+  it('builds the client lazily and rebuilds it on a live settings edit without re-registering', () => {
+    const { ctx, registered, emit } = fakeContext()
+    let current: ConfigValues = {}
+    const createClient = vi.fn((opts: RefkitOptions) => ({ providers: opts.providers }) as unknown as RefkitClient)
+    const handles = applyWith(ctx as never, liveConfig(() => current), { createClient, env: {} })
+    const providerIds = (call: number) => createClient.mock.calls[call][0].providers.map(p => p.id)
     // lazy: nothing is built until a tool asks for the client
-    expect(built).toHaveLength(0)
+    expect(createClient).not.toHaveBeenCalled()
     handles.getClient()
     handles.getClient()
-    expect(built).toHaveLength(1)
-    expect(built[0]).not.toContain('pexels')
-    // a settings change swaps the source and drops the cached client
-    let current: Record<string, unknown> = {}
-    hooks!.setSource(() => current)
-    expect(() => hooks!.validate?.({ sources: ['nope'] })).toThrow(/valid ids/)
+    expect(createClient).toHaveBeenCalledTimes(1)
+    expect(providerIds(0)).not.toContain('pexels')
+    // the Loader commits new values into the same references, then notifies the fiber
     current = { pexelsApiKey: 'k', limit: 7 }
-    hooks!.onChange()
+    expect(handles.getConfig().limit).toBe(12)
+    emit('loader/volatile-update', [['pexelsApiKey'], ['limit']])
     expect(handles.getConfig().limit).toBe(7)
     handles.getClient()
-    expect(built).toHaveLength(2)
-    expect(built[1]).toContain('pexels')
-    expect(built[1]).toContain('pexels-video')
+    expect(createClient).toHaveBeenCalledTimes(2)
+    expect(providerIds(1)).toContain('pexels')
+    expect(providerIds(1)).toContain('pexels-video')
+    // no re-apply: the tools were registered once
+    expect(registered.map(d => d.name).sort()).toEqual(['refkit_rights', 'refkit_search'])
+  })
+  it('opts out of an auto-generated settings page when the settings service exists', () => {
+    const configure = vi.fn((_policy: { auto?: boolean }, _owner?: unknown) => () => {})
+    const { ctx } = fakeContext({ settings: { configure } })
+    apply(ctx as never, Config({}))
+    expect(configure).toHaveBeenCalledTimes(1)
+    expect(configure.mock.calls[0][0]).toEqual({ auto: false })
   })
   it('registers a system-prompt section when the service exists', () => {
     const sections: { name: string; order: number; text: string }[] = []
     const { ctx } = fakeContext({ systemPrompt: { section: (s) => { sections.push(s); return () => {} } } })
-    apply(ctx as never, {})
+    apply(ctx as never, Config({}))
     expect(sections).toEqual([{ name: 'tool:refkit', order: 115, text: GUIDANCE }])
+  })
+  it('guidance names both tools and the intent parameter', () => {
     expect(GUIDANCE).toContain('refkit_search')
     expect(GUIDANCE).toContain('refkit_rights')
     expect(GUIDANCE).toContain('intent')
-  })
-  it('rejects an unknown sources id in the entry config at apply time', () => {
-    const { ctx } = fakeContext()
-    expect(() => apply(ctx as never, { sources: ['unsplsh'] })).toThrow(/valid ids/)
   })
 })

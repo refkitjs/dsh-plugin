@@ -8,7 +8,7 @@
  */
 
 import { useState, type ReactNode } from 'react'
-import type { ToolCallBlock } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ToolCallBlock } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { ToolCallOwnerProps } from '@deepseek-ai/dsh-client-ui-tool/client'
 import { narrowOutcome, type RefTile, type SearchOutcome } from '../core/outcome.ts'
 import { aspectRatio, licenseLabel, summarizeSources, verdictBadge } from './badges.ts'
@@ -114,10 +114,10 @@ function Header({ outcome }: { outcome: SearchOutcome }): ReactNode {
   )
 }
 
-/** The slot component: dispatch by block lifecycle, degrade safely. */
+/** The slot component: dispatch by call phase, degrade safely. */
 export function RefkitCard(props: ToolCallOwnerProps): ReactNode {
-  const block: ToolCallBlock = props.block
-  if (!('kind' in block)) return <RunningGrid />
+  if (props.phase !== 'result') return <RunningGrid />
+  const block = props.block
   if (block.isError) {
     const text = textOf(block)
     return <div className="rk-error">{text.length > 0 ? text : `${block.error?.name ?? 'Error'}: ${block.error?.code ?? 'unknown'}`}</div>
