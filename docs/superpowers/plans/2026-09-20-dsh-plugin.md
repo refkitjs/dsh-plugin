@@ -139,7 +139,7 @@ Resolve each provider version with `npm view @refkit/provider-<name> version` an
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
     "@deepseek-ai/dsh-client-runtime": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-conversation": "next",
+    "@deepseek-ai/dsh-client-ui-conversation": "0.1.5-rc.2",
     "@deepseek-ai/dsh-client-ui-tool": "0.1.5-rc.2",
     "@deepseek-ai/dsh-settings": "0.1.5-rc.2",
     "@deepseek-ai/dsh-system-prompt": "0.1.5-rc.2",
@@ -153,11 +153,33 @@ Resolve each provider version with `npm view @refkit/provider-<name> version` an
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.64.0",
     "vitest": "^3.2.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "@deepseek-ai/dsh-invariants": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-session": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-agent": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-llm": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-scope": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-user-approval": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-code-runtime": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-brand": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-goal": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-commands": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-credentials": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-session-projection": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-api-remotes": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-typert-registry": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-api-gateway": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-util-values": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-client-ui-slots": "0.1.5-rc.2",
+      "@deepseek-ai/dsh-client-ui-chat": "0.1.5-rc.2"
+    }
   }
 }
 ```
 
-After `pnpm install`, replace the `"next"` dist-tag for `@deepseek-ai/dsh-client-ui-conversation` with the exact version pnpm resolved (read it from `pnpm-lock.yaml`), so the lockfile and manifest agree.
+The `pnpm.overrides` block exists because every `@deepseek-ai/*` package has only prerelease versions and pnpm's peer auto-install reconciles their `^0.1.5-rc.2` peer ranges into `>=0.1.5 <0.2.0-0`, which matches nothing; pinning the family to the `next` versions bypasses that. Overrides apply only to this repository's install, never to consumers.
 
 - [ ] **Step 3: Write `.npmrc`, `cordis.patch.yml`, `LICENSE`**
 
@@ -358,7 +380,7 @@ export default function config(): UserConfig[] {
 - [ ] **Step 6: Install and confirm the toolchain resolves**
 
 Run: `pnpm install`
-Expected: succeeds; `node_modules/@refkit/core/package.json` has `"version": "0.9.0"`; `node_modules/@deepseek-ai/dsh-tools/package.json` has `"version": "0.1.5-rc.2"`. Then replace the `"next"` dist-tag in `devDependencies` with the resolved exact version and run `pnpm install` again (lockfile must be unchanged).
+Expected: succeeds; `node_modules/@refkit/core/package.json` has `"version": "0.9.0"`; `node_modules/@deepseek-ai/dsh-tools/package.json` has `"version": "0.1.5-rc.2"`; `node -e "import('@deepseek-ai/dsh-tools').then(m => console.log(typeof m.defineTool))"` prints `function`.
 
 - [ ] **Step 7: Write the failing outcome tests**
 
@@ -2496,8 +2518,8 @@ export function apply(ctx: ClientContext): void {
 
 - [ ] **Step 8: Build and verify the client bundle shape**
 
-Run: `pnpm typecheck && pnpm lint && pnpm test && pnpm build && head -c 120 lib/client.js && echo && grep -c '"refkit_search"' lib/client.js`
-Expected: typecheck (host + client programs) silent; `lib/client.js` begins with `window.__ModuleLoader__.load({ id: "@refkit/dsh-plugin", factory: (require) => {`; the grep prints at least `1`. If tsdown's purity plugin throws on an `@deepseek-ai/*` value import, that import must become `import type`.
+Run: `pnpm typecheck && pnpm lint && pnpm test && pnpm build && head -c 200 lib/client.js && echo && grep -c '"refkit_search"' lib/client.js`
+Expected: typecheck (host + client programs) silent; `lib/client.js` begins with the loader banner `window.__ModuleLoader__.load({ id: "@refkit/dsh-plugin", factory: (require) => {` (Rolldown may re-wrap it across lines — compare with whitespace collapsed); the grep prints at least `1`. If tsdown's purity plugin throws on an `@deepseek-ai/*` value import, that import must become `import type`.
 
 - [ ] **Step 9: Commit**
 
@@ -2526,9 +2548,13 @@ git commit -m "feat(client): refkit_search card — thumbnail grid with license 
 import { readFileSync } from 'node:fs'
 
 const js = readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8')
-const banner = 'window.__ModuleLoader__.load({ id: "@refkit/dsh-plugin", factory: (require) => {'
-if (!js.startsWith(banner)) { console.error('client bundle: missing loader banner'); process.exit(1) }
-if (!js.trimEnd().endsWith('return module.exports; } });')) { console.error('client bundle: missing loader footer'); process.exit(1) }
+// Rolldown re-wraps the banner/footer across lines, so compare with whitespace
+// collapsed; the trailing //# sourceMappingURL line sits after the footer.
+const squash = (s) => s.replace(/\s+/g, ' ').trim()
+const body = squash(js.replace(/\/\/# sourceMappingURL=.*$/m, ''))
+const banner = squash('window.__ModuleLoader__.load({ id: "@refkit/dsh-plugin", factory: (require) => {')
+if (!body.startsWith(banner)) { console.error('client bundle: missing loader banner'); process.exit(1) }
+if (!body.endsWith(squash('return module.exports; } });'))) { console.error('client bundle: missing loader footer'); process.exit(1) }
 if (!js.includes('"refkit_search"')) { console.error('client bundle: slot key not found'); process.exit(1) }
 const forbidden = [...js.matchAll(/require\("(@deepseek-ai\/[^"]+)"\)/g)].map(m => m[1])
 const allowed = new Set(['@deepseek-ai/cordis', '@deepseek-ai/dsh-client-ui-slots', '@deepseek-ai/dsh-client-web-react', '@deepseek-ai/dsh-client-ui-primitives', '@deepseek-ai/dsh-client-schema-form', '@deepseek-ai/dsh-client-runtime/client'])
@@ -2536,6 +2562,10 @@ const bad = forbidden.filter(id => !allowed.has(id))
 if (bad.length > 0) { console.error('client bundle: non-platform requires', bad); process.exit(1) }
 console.log('client bundle ok', js.length, 'bytes')
 ```
+
+- [ ] **Step 1b: Silence tsdown's CommonJS notice for the client bundle**
+
+In `tsdown.config.ts` `clientConfig()`, add `checks: { legacyCjs: false }` next to `format: 'cjs'` with the comment `// dsh's module loader consumes a CJS closure factory by contract.` — the browser bundle is CJS on purpose and the notice would otherwise print on every build. The gate requires a build with no warnings.
 
 - [ ] **Step 2: Write `scripts/smoke-host.mjs`**
 
