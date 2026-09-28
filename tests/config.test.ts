@@ -142,6 +142,13 @@ describe('Config schema', () => {
     expect(values).toMatchObject({ sources: [], limit: 12, poolFactor: 2, deadlineMs: 15000, timeoutMs: 10000, rerank: true, sourceConfidence: true })
     for (const field of KEY_FIELDS) expect(values[field], field).toBeUndefined()
   })
+  it('readConfig reads only the declared fields; unknown keys pass the schema but are ignored', () => {
+    const declared = [...KEY_FIELDS, 'sources', 'limit', 'poolFactor', 'deadlineMs', 'timeoutMs', 'rerank', 'sourceConfidence', 'userAgent']
+    const values = readConfig(Config({ stray: 1 } as never))
+    expect(Object.keys(values).sort()).toEqual(declared.sort())
+    // defensive: a declared field without a reference reads as undefined
+    expect(readConfig({ ...Config({}), limit: 5 } as never).limit).toBeUndefined()
+  })
   it('exposes every field as a live reference', () => {
     const config = Config({})
     expect(Object.keys(config)).toHaveLength(18)

@@ -212,9 +212,18 @@ export type Config = { readonly [K in keyof ConfigValues]-?: Volatile<ConfigValu
 const _schemaCheck: Config = {} as ReturnType<typeof Config>
 void _schemaCheck
 
+/**
+ * The schema's declared field names. `z.object` passes unknown keys through, so a stray key in
+ * the user's `cordis.patch.yml` entry reaches `apply`; reading only these keeps it ignored.
+ */
+const CONFIG_FIELDS = Object.keys(Config.dict ?? {}) as (keyof ConfigValues)[]
+
 /** One consistent snapshot; the Loader commits every reference before it emits the event. */
 export function readConfig(config: Config): ConfigValues {
-  return Object.fromEntries(Object.entries(config).map(([key, ref]) => [key, (ref as Volatile<unknown>).get()])) as ConfigValues
+  return Object.fromEntries(CONFIG_FIELDS.map((field) => {
+    const ref = config[field] as Partial<Volatile<unknown>> | undefined
+    return [field, typeof ref?.get === 'function' ? ref.get() : undefined]
+  })) as ConfigValues
 }
 
 /** Providers that are keyless or keyed-and-configured, intersected with the whitelist, in registry order. */

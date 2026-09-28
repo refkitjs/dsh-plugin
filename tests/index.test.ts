@@ -55,8 +55,8 @@ describe('plugin entry', () => {
     const providerIds = (call: number) => createClient.mock.calls[call][0].providers.map(p => p.id)
     // lazy: nothing is built until a tool asks for the client
     expect(createClient).not.toHaveBeenCalled()
-    handles.getClient()
-    handles.getClient()
+    const held = handles.getClient()
+    expect(handles.getClient()).toBe(held)
     expect(createClient).toHaveBeenCalledTimes(1)
     expect(providerIds(0)).not.toContain('pexels')
     // the Loader commits new values into the same references, then notifies the fiber
@@ -64,11 +64,22 @@ describe('plugin entry', () => {
     expect(handles.getConfig().limit).toBe(12)
     emit('loader/volatile-update', [['pexelsApiKey'], ['limit']])
     expect(handles.getConfig().limit).toBe(7)
-    handles.getClient()
+    const rebuilt = handles.getClient()
     expect(createClient).toHaveBeenCalledTimes(2)
     expect(providerIds(1)).toContain('pexels')
     expect(providerIds(1)).toContain('pexels-video')
+    // a client already held (e.g. by an in-flight search) is left intact; only the next getClient() sees the edit
+    expect(held).toBe(createClient.mock.results[0].value)
+    expect(held.providers.map(p => p.id)).not.toContain('pexels')
+    expect(rebuilt).not.toBe(held)
+    expect(handles.getClient()).toBe(rebuilt)
     // no re-apply: the tools were registered once
+    expect(registered.map(d => d.name).sort()).toEqual(['refkit_rights', 'refkit_search'])
+  })
+  it('ignores unknown keys in the entry config and still registers both tools', () => {
+    const { ctx, registered } = fakeContext()
+    const createClient = vi.fn((opts: RefkitOptions) => ({ providers: opts.providers }) as unknown as RefkitClient)
+    applyWith(ctx as never, Config({ legacyField: 'x' } as never), { createClient, env: {} })
     expect(registered.map(d => d.name).sort()).toEqual(['refkit_rights', 'refkit_search'])
   })
   it('opts out of an auto-generated settings page when the settings service exists', () => {
