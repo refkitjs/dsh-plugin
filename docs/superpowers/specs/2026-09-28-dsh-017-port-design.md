@@ -69,9 +69,10 @@ sources" description.
   ctx.fiber)))` opts out of any future auto-generated page, because the plugin ships its own (P3).
 - An edit to a volatile field never re-applies the plugin; a stored invalid config fails the
   fiber at startup (the user fixes `cordis.patch.yml`) — documented in the README.
-- User-facing copy that names the settings location reads: "Plugins (sidebar) →
-  @refkit/dsh-plugin → refkit → Configure" (EN) / 「插件（侧边栏）→ @refkit/dsh-plugin → refkit →
-  配置」 (ZH), in tool errors, `cordis.patch.yml` comments and READMEs.
+- User-facing copy that names the settings location reads: "Plugins (sidebar) → refkit →
+  Components → refkit" (EN) / 「插件（侧边栏）→ refkit → 包含的组件 → refkit」 (ZH), in tool errors,
+  `cordis.patch.yml` comments and READMEs. (Amended by P7 after live acceptance; the first draft's
+  "@refkit/dsh-plugin → refkit → Configure" did not match the screen.)
 
 ### P3 — Settings page (new; replaces D4's settings card)
 
@@ -129,6 +130,29 @@ The page follows the pattern of dsh's own settings pages (`@deepseek-ai/dsh-clie
 - `@refkit/provider-openverse` `^0.5.1` and `@refkit/provider-artic` `^0.4.1` (anonymous Openverse
   `page_size` ≤ 20; ARTIC `limit` ≤ 100 — refkitjs/refkit#29). Applied only after both are on npm.
 
+### P7 — Plugin display metadata (added after live acceptance)
+
+- Observed on dsh 0.1.7-rc.2: without metadata the Plugins page falls back to the module
+  specifier. The installed row and the component row both read "@refkit/dsh-plugin"; the
+  component row shows the row id `refkit` as small code text; the configure control is the whole
+  component row (accessible name "配置 @refkit/dsh-plugin" / "Configure @refkit/dsh-plugin"), with
+  no visible "Configure" label.
+- dsh reads display metadata without importing the plugin (`dsh-app-boot` `readPluginMeta`):
+  `<package>/locale/en.json` (English required) and sibling locale files shaped
+  `{ "meta": { "title", "description" } }`, resolved through the package's `exports`, plus
+  `package.json.icon` loaded as an image data URL. Official plugins
+  (`@deepseek-ai/dsh-experimental-auto-review`) ship `locale/en.json`, `locale/zh.json` and
+  `icon.svg`, export `./locale/*.json`, and list all three in `files`.
+- Ship the same: `locale/en.json` and `locale/zh.json`, both with title `refkit`; descriptions
+  EN "Search 23 open sources for image, video, audio and text references, each tagged with its
+  license and a use verdict." / ZH 「在 23 个开放来源中检索图片、视频、音频和文本参考素材，并为每条
+  结果标注许可证和可用性判定。」; a 36×36 `icon.svg` in the official style (transparent
+  background, one gradient-filled glyph, white strokes); `package.json` gains `"icon":
+  "./icon.svg"`, export `"./locale/*.json": "./locale/*.json"`, and `files` entries
+  `locale/*.json` and `icon.svg`. `package.json.description` stays as the npm description.
+- Because the title equals the row id, the component row drops its code line. The location copy
+  in P2 is rewritten to match the screen.
+
 ## Testing
 
 - Unit: `Config({})` yields references with the `DEFAULTS` values; `Config({ sources: ['unsplsh']
@@ -137,7 +161,12 @@ The page follows the pattern of dsh's own settings pages (`@deepseek-ai/dsh-clie
   object, proving a settings edit swaps the client without re-apply; `configure({ auto: false })`
   is registered when a settings service exists; settings-model diff/validation/summary.
 - Build: bundle check with the corrected allow-list; `lib/` fresh.
-- Live acceptance on dsh 0.1.7-rc.2 (controller, in the Browser pane): the row shows **配置**,
+- Packaging (P7): a unit test reads `locale/en.json` / `locale/zh.json` (both `meta.title ===
+  'refkit'`, non-empty descriptions mentioning 23 sources) and asserts `package.json` exports
+  `./locale/*.json`, sets `icon`, and lists `locale/*.json` and `icon.svg` in `files`;
+  `npm pack --dry-run` shows the three files.
+- Live acceptance on dsh 0.1.7-rc.2 (controller, in the Browser pane): the Plugins page shows
+  the title `refkit` with the localized description and icon, the component row opens the page,
   the page renders populated, saving a key flips its marker to "set" without restart and enables
   the source on the next search, clearing it flips back, an invalid bound is refused with the
   inline error, the card renders across phases, Openverse returns results.
