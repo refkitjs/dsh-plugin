@@ -36,6 +36,10 @@ describe('schemas', () => {
     expect(def.name).toBe(SEARCH_TOOL_NAME)
     expect(def.timeoutMs).toBe(65000)
   })
+  it('the description points to the settings location', () => {
+    const def = createSearchTool(deps([provider('a', [emit('https://a/1', 'CC0-1.0')])]))
+    expect(def.description).toMatch(/Plugins \(sidebar\) → @refkit\/dsh-plugin → refkit → Configure/)
+  })
 })
 
 /** The wiring surface under test, narrowed from ToolDefinition's JsonValue-typed, optional members. */

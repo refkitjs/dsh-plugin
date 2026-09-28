@@ -18,11 +18,11 @@ dsh plugin --profile web add @refkit/dsh-plugin
 dsh plugin --profile web add github:refkitjs/dsh-plugin
 ```
 
-Restart the dsh web host once so the profile picks up the bundle. Tested against `@deepseek-ai/dsh` 0.1.7-rc.2. Requires dsh ≥ 0.1.7-rc.2 (dsh refuses to load it on older releases).
+Restart the dsh web host once so the profile picks up the bundle. Tested against `@deepseek-ai/dsh` 0.1.7-rc.2. Requires dsh 0.1.x from 0.1.7-rc.2 on (`^0.1.7-rc.2`); dsh refuses to load it on older releases and on the 0.2.0 pre-releases (`next`) until support is widened. dsh is in developer preview and its plugin API changes between release candidates.
 
 ## Configuration
 
-Keys and tuning are set on **Plugins (sidebar) → @refkit/dsh-plugin → refkit → Configure** (namespace `refkit`); changes apply on the next call, no restart needed. Keys are `secret` fields: masked in the card, never logged, never returned to the model, and stored in the profile's `cordis.patch.yml` (file mode 0600, plaintext). Each key also falls back to a `REFKIT_*` environment variable when left empty — the same names `@refkit/mcp` reads, so one `.env` serves both. An invalid hand-edited `cordis.patch.yml` stops the plugin at startup until it's fixed.
+Keys and tuning are set on **Plugins (sidebar) → @refkit/dsh-plugin → refkit → Configure** (namespace `refkit`); changes apply on the next call, no restart needed. Keys are `secret` fields: never shown on the settings page (only a Set / Not set marker), never logged, never returned to the model, and stored in the profile's `cordis.patch.yml` (file mode 0600, plaintext). Each key left empty falls back to the environment variables in the table below (`REFKIT_*` first) — the same names `@refkit/mcp` reads, so one `.env` serves both. An invalid hand-edited `cordis.patch.yml` stops the plugin at startup until it's fixed.
 
 | Field | Env (first wins) | Enables |
 | --- | --- | --- |

@@ -18,11 +18,11 @@ dsh plugin --profile web add @refkit/dsh-plugin
 dsh plugin --profile web add github:refkitjs/dsh-plugin
 ```
 
-重启一次 dsh web host,让该 profile 加载该 bundle。已在 `@deepseek-ai/dsh` 0.1.7-rc.2 上测试通过;要求 dsh ≥ 0.1.7-rc.2(更低版本 dsh 会拒绝加载该插件)。
+重启一次 dsh web host,让该 profile 加载该 bundle。已在 `@deepseek-ai/dsh` 0.1.7-rc.2 上测试通过;要求 dsh 0.1.x 且不低于 0.1.7-rc.2(`^0.1.7-rc.2`),更低版本以及 0.2.0 预发布版(`next` 频道)的 dsh 会拒绝加载该插件,直到后续版本放宽支持范围。dsh 目前处于开发者预览阶段,其插件 API 在各个 release candidate 之间会发生变化。
 
 ## 配置
 
-密钥和调优参数在「插件（侧边栏）→ @refkit/dsh-plugin → refkit → 配置」中设置(命名空间为 `refkit`);修改在下一次调用时生效,无需重启。所有 key 字段都是 `secret` 类型:在卡片中会被遮罩显示,不会被记录日志,也不会返回给模型,并以明文形式存储在该 profile 的 `cordis.patch.yml` 中(文件权限 0600)。某个 key 留空时会回退读取对应的 `REFKIT_*` 环境变量——与 `@refkit/mcp` 读取的变量名相同,因此同一份 `.env` 可以同时服务这两者。手动编辑后校验失败的 `cordis.patch.yml` 会导致插件在启动时停止运行,直到修复为止。
+密钥和调优参数在「插件（侧边栏）→ @refkit/dsh-plugin → refkit → 配置」中设置(命名空间为 `refkit`);修改在下一次调用时生效,无需重启。所有 key 字段都是 `secret` 类型:设置页不会回显已保存的值(只显示 Set / Not set 标记),不会被记录日志,也不会返回给模型,并以明文形式存储在该 profile 的 `cordis.patch.yml` 中(文件权限 0600)。某个 key 留空时会依次回退读取下表列出的环境变量(`REFKIT_*` 优先)——与 `@refkit/mcp` 读取的变量名相同,因此同一份 `.env` 可以同时服务这两者。手动编辑后校验失败的 `cordis.patch.yml` 会使插件启动失败,直到修复为止。
 
 | 字段 | 环境变量(先匹配者优先) | 启用的来源 |
 | --- | --- | --- |

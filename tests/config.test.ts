@@ -204,6 +204,7 @@ describe('buildClient', () => {
   })
   it('throws a clear error when the whitelist leaves nothing enabled', () => {
     expect(() => buildClient(resolveConfig({ sources: ['unsplash'] }, {}))).toThrow(/no sources enabled/i)
+    expect(() => buildClient(resolveConfig({ sources: ['unsplash'] }, {}))).toThrow(/Plugins \(sidebar\) → @refkit\/dsh-plugin → refkit → Configure/)
   })
 })
 
