@@ -38,7 +38,7 @@ export interface RefkitSettingsState extends SettingsFormShell {
   keys: Readonly<Record<string, SettingsFieldState>>
   /** Keys the Host reports as stored, in display order. */
   configured: readonly string[]
-  /** The key whose removal is crossing the wire. */
+  /** The key whose removal is crossing the wire; every control is locked meanwhile. */
   removing: string | null
   /** The key whose last removal the Host did not accept. */
   removeFailed: string | null
@@ -50,7 +50,7 @@ export interface RefkitSettingsFace extends SettingsFormActions {
     /** Page snapshot, bound by the renderer as `useRefkitSettings`. */
     refkitSettings: HostObservable<RefkitSettingsState>
   }
-  /** Unset one stored key now, outside the staged save. */
+  /** Unset one stored key now, outside the staged save; `edit`, `resetField` and `save` are no-ops until it settles. */
   remove: (field: string) => void
 }
 
@@ -109,11 +109,17 @@ export function createSettingsController(configForms: Pick<ConfigForms, 'get' | 
   })
 
   const actions = model.actions()
+  /** True while a removal is crossing the wire: the form takes no edits until it settles. */
+  const locked = (): boolean => removing !== null
   const remove = (field: string): void => {
     const shell = model.shell()
-    // A removal is its own write: with drafts staged it would move the revision
-    // their save is fenced on, so the page offers it only on a clean form.
-    if (disposed || removing !== null || !KEY_FIELDS_CLIENT.includes(field) || !shell.available || !shell.writable || shell.dirty || shell.saving) return
+    // A removal is its own write and moves the namespace revision. The model
+    // fences its next save on the revision captured at the first staged edit
+    // (`stage(): baseline ??= snapshot`), which only a discard or a landed save
+    // resets, so: offer Remove only on a clean form, drop whatever is staged
+    // (a no-op draft still holds that fence), and take no edits until it settles.
+    if (disposed || locked() || !KEY_FIELDS_CLIENT.includes(field) || !shell.available || !shell.writable || shell.dirty || shell.saving) return
+    actions.discard()
     removing = field
     removeFailed = null
     publish()
@@ -131,6 +137,9 @@ export function createSettingsController(configForms: Pick<ConfigForms, 'get' | 
   const face: RefkitSettingsFace = {
     hooks: { refkitSettings: store },
     ...actions,
+    edit: (field, text) => { if (!locked()) actions.edit(field, text) },
+    resetField: (field) => { if (!locked()) actions.resetField(field) },
+    save: () => { if (!locked()) actions.save() },
     discard: () => {
       const stale = removeFailed !== null
       removeFailed = null

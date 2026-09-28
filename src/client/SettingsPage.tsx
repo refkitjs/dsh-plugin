@@ -39,7 +39,10 @@ type RowActions = Pick<RefkitSettingsFace, 'edit' | 'resetField' | 'remove'>
 export function RefkitSettingsPage(props: RefkitSettingsPageProps): ReactNode {
   const state: RefkitSettingsState = props.useRefkitSettings((snapshot: RefkitSettingsState) => snapshot)
   if (props.view === 'summary') return summaryText(state.configured.length, KEY_FIELDS_CLIENT.length)
-  const disabled = !state.writable
+  // A removal in flight locks every control (the face ignores edits and saves
+  // meanwhile). Save needs no extra lock: Remove runs only on a clean form, so
+  // the frame's own `!dirty` keeps it disabled until the removal settles.
+  const disabled = !state.writable || state.removing !== null
   const common = { overriddenLabel: S.overridden, resetLabel: S.reset, disabled }
   return (
     <SettingsForm labels={FORM_LABELS} state={state} onSave={props.save} onDiscard={props.discard}>
@@ -122,7 +125,7 @@ function KeyRow({ field, state, disabled, actions }: { field: string; state: Ref
                 size="sm"
                 aria-label={S.removeLabel(label)}
                 title={state.dirty ? S.removeBlocked : undefined}
-                disabled={disabled || state.dirty || state.saving || state.removing !== null}
+                disabled={disabled || state.dirty || state.saving}
                 onClick={() => { actions.remove(field) }}
               >
                 {removing ? S.removing : S.remove}

@@ -27,7 +27,7 @@ export interface RefkitSettingsState extends SettingsFormShell {
     keys: Readonly<Record<string, SettingsFieldState>>;
     /** Keys the Host reports as stored, in display order. */
     configured: readonly string[];
-    /** The key whose removal is crossing the wire. */
+    /** The key whose removal is crossing the wire; every control is locked meanwhile. */
     removing: string | null;
     /** The key whose last removal the Host did not accept. */
     removeFailed: string | null;
@@ -38,7 +38,7 @@ export interface RefkitSettingsFace extends SettingsFormActions {
         /** Page snapshot, bound by the renderer as `useRefkitSettings`. */
         refkitSettings: HostObservable<RefkitSettingsState>;
     };
-    /** Unset one stored key now, outside the staged save. */
+    /** Unset one stored key now, outside the staged save; `edit`, `resetField` and `save` are no-ops until it settles. */
     remove: (field: string) => void;
 }
 export interface RefkitSettingsController {
