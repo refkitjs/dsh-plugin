@@ -12,7 +12,7 @@ if (!body.startsWith(banner)) { console.error('client bundle: missing loader ban
 if (!body.endsWith(squash('return module.exports; } });'))) { console.error('client bundle: missing loader footer'); process.exit(1) }
 if (!js.includes('"refkit_search"')) { console.error('client bundle: slot key not found'); process.exit(1) }
 const forbidden = [...js.matchAll(/require\("(@deepseek-ai\/[^"]+)"\)/g)].map(m => m[1])
-const allowed = new Set(['@deepseek-ai/cordis', '@deepseek-ai/dsh-client-ui-slots', '@deepseek-ai/dsh-client-web-react', '@deepseek-ai/dsh-client-ui-primitives', '@deepseek-ai/dsh-client-schema-form', '@deepseek-ai/dsh-client-runtime/client'])
+const allowed = new Set(['@deepseek-ai/cordis', '@deepseek-ai/dsh-client-store', '@deepseek-ai/dsh-client-ui-slots', '@deepseek-ai/dsh-client-ui-primitives', '@deepseek-ai/dsh-client-ui-dockkit'])
 const bad = forbidden.filter(id => !allowed.has(id))
 if (bad.length > 0) { console.error('client bundle: non-platform requires', bad); process.exit(1) }
 console.log('client bundle ok', js.length, 'bytes')

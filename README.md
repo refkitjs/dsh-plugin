@@ -8,7 +8,7 @@ English | [中文](README.zh.md)
 - **`refkit_rights`** — re-check one license for a different intent without searching again.
 - **Web card** — thumbnail grid; license chip on every tile; green / blue / red / amber badges for allowed / credit required / not allowed / needs review; one-click credit copy.
 
-Eleven sources work with no key at all (Openverse, Met, Art Institute of Chicago, Wikimedia Commons, Rijksmuseum, Internet Archive, Project Gutenberg, PoetryDB, Poly Haven, ambientCG, nailbook). Add free keys for the rest under Settings → Plugins → refkit.
+Eleven sources work with no key at all (Openverse, Met, Art Institute of Chicago, Wikimedia Commons, Rijksmuseum, Internet Archive, Project Gutenberg, PoetryDB, Poly Haven, ambientCG, nailbook). Add free keys for the rest under **Plugins (sidebar) → refkit → Components → refkit**.
 
 ## Install
 
@@ -18,11 +18,11 @@ dsh plugin --profile web add @refkit/dsh-plugin
 dsh plugin --profile web add github:refkitjs/dsh-plugin
 ```
 
-Restart the dsh web host once so the profile picks up the bundle. Tested against `@deepseek-ai/dsh` 0.1.5-rc.2 (the `next` channel); dsh is in developer preview and its plugin API changes between release candidates.
+Restart the dsh web host once so the profile picks up the bundle. Tested against `@deepseek-ai/dsh` 0.1.7-rc.2. Requires dsh 0.1.x from 0.1.7-rc.2 on (`^0.1.7-rc.2`); dsh refuses to load it on older releases and on the 0.2.0 pre-releases (`next`) until support is widened. dsh is in developer preview and its plugin API changes between release candidates.
 
 ## Configuration
 
-Settings → Plugins → **refkit** (namespace `refkit`; changes apply on the next call). Keys are `secret` fields: masked in the card, never logged, never returned to the model. Each key also falls back to an environment variable — the same names `@refkit/mcp` reads, so one `.env` serves both.
+Keys and tuning are set on **Plugins (sidebar) → refkit → Components → refkit** (namespace `refkit`); changes apply on the next call, no restart needed. Keys are `secret` fields: never shown on the settings page (only a Set / Not set marker), never logged, never returned to the model, and stored in the profile's `cordis.patch.yml` (file mode 0600, plaintext). Each key left empty falls back to the environment variables in the table below (`REFKIT_*` first) — the same names `@refkit/mcp` reads, so one `.env` serves both. An invalid hand-edited `cordis.patch.yml` stops the plugin at startup until it's fixed.
 
 | Field | Env (first wins) | Enables |
 | --- | --- | --- |

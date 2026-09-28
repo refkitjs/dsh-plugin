@@ -3,9 +3,10 @@ import { describe, expect, it, vi } from 'vitest'
 import { met } from '@refkit/provider-met'
 import { polyhaven } from '@refkit/provider-polyhaven'
 import { rijksmuseum } from '@refkit/provider-rijksmuseum'
+import { wikimediaCommons } from '@refkit/provider-wikimedia-commons'
 import {
   Config, DEFAULTS, KEY_ENV, KEY_FIELDS, KEYLESS_IDS, PLUGIN_VERSION, PROVIDER_IDS, PROVIDER_REGISTRY,
-  buildClient, enabledProviders, resolveConfig, validateConfig,
+  buildClient, enabledProviders, readConfig, resolveConfig,
 } from '../src/config.ts'
 
 // The three N+1 sources' factories are wrapped in spies that still call the real
@@ -22,6 +23,12 @@ vi.mock('@refkit/provider-rijksmuseum', async (importOriginal) => {
 vi.mock('@refkit/provider-polyhaven', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@refkit/provider-polyhaven')>()
   return { ...actual, polyhaven: vi.fn(actual.polyhaven) }
+})
+// wikimediaCommons does not expose the thumbnail width it was built with, so the
+// registry's requested config is asserted through the same spy pattern.
+vi.mock('@refkit/provider-wikimedia-commons', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@refkit/provider-wikimedia-commons')>()
+  return { ...actual, wikimediaCommons: vi.fn(actual.wikimediaCommons) }
 })
 
 const EXPECTED_IDS = [
@@ -124,38 +131,57 @@ describe('enabledProviders', () => {
     make('polyhaven')
     expect(vi.mocked(polyhaven)).toHaveBeenLastCalledWith({ maxAssets: 7 })
   })
+  it('wikimedia-commons requests a 500px thumbnail', () => {
+    const cfg = resolveConfig({}, {})
+    const make = (id: string) => PROVIDER_REGISTRY.find(e => e.id === id)!.make(cfg)
+    make('wikimedia-commons')
+    expect(vi.mocked(wikimediaCommons)).toHaveBeenLastCalledWith({ thumbWidth: 500 })
+  })
 })
 
-describe('validateConfig', () => {
-  it('rejects an unknown source id naming the valid ids', () => {
-    expect(() => validateConfig({ sources: ['unsplsh'] })).toThrow(/unsplsh.*valid ids/i)
+describe('sources schema', () => {
+  it('rejects an unknown source id, naming the valid ids', () => {
+    expect(() => Config({ sources: ['unsplsh'] })).toThrow(/unsplsh/)
+    expect(() => Config({ sources: ['unsplsh'] })).toThrow(/wikimedia-commons/)
   })
-  it('accepts an empty config and known ids', () => {
-    expect(() => validateConfig({})).not.toThrow()
-    expect(() => validateConfig({ sources: ['met', 'unsplash'] })).not.toThrow()
+  it('accepts known ids', () => {
+    expect(() => Config({ sources: ['met', 'unsplash'] })).not.toThrow()
   })
 })
 
 describe('Config schema', () => {
-  it('applies schemastery defaults', () => {
-    const value = new Config({}) as Record<string, unknown>
-    expect(value.limit).toBe(12)
-    expect(value.poolFactor).toBe(2)
-    expect(value.sources).toEqual([])
+  it('readConfig snapshots the defaults from an empty entry', () => {
+    const values = readConfig(Config({}))
+    expect(values).toMatchObject({ sources: [], limit: 12, poolFactor: 2, deadlineMs: 15000, timeoutMs: 10000, rerank: true, sourceConfidence: true })
+    for (const field of KEY_FIELDS) expect(values[field], field).toBeUndefined()
   })
-  it('marks exactly the KEY_FIELDS secret in the serialized schema', () => {
+  it('readConfig reads only the declared fields; unknown keys pass the schema but are ignored', () => {
+    const declared = [...KEY_FIELDS, 'sources', 'limit', 'poolFactor', 'deadlineMs', 'timeoutMs', 'rerank', 'sourceConfidence', 'userAgent']
+    const values = readConfig(Config({ stray: 1 } as never))
+    expect(Object.keys(values).sort()).toEqual(declared.sort())
+    // defensive: a declared field without a reference reads as undefined
+    expect(readConfig({ ...Config({}), limit: 5 } as never).limit).toBeUndefined()
+  })
+  it('exposes every field as a live reference', () => {
+    const config = Config({})
+    expect(Object.keys(config)).toHaveLength(18)
+    expect(Object.values(config).every(r => typeof (r as { get?: unknown }).get === 'function')).toBe(true)
+  })
+  it('marks exactly the KEY_FIELDS secret and all 18 fields volatile in the serialized schema', () => {
     // toJSON() is a ref table: refs[uid] is the object node whose dict maps field -> ref id
-    const json = Config.toJSON() as unknown as { uid: number; refs: Record<string, { dict?: Record<string, number>; meta?: { role?: string } }> }
+    const json = Config.toJSON() as unknown as { uid: number; refs: Record<string, { dict?: Record<string, number>; meta?: { role?: string; volatile?: boolean } }> }
     const dict = json.refs[json.uid].dict!
-    const roleOf = (field: string) => json.refs[dict[field]]?.meta?.role
-    for (const field of KEY_FIELDS) expect(roleOf(field), field).toBe('secret')
-    const secretFields = Object.keys(dict).filter(field => roleOf(field) === 'secret')
+    const metaOf = (field: string) => json.refs[dict[field]]?.meta
+    for (const field of KEY_FIELDS) expect(metaOf(field)?.role, field).toBe('secret')
+    const secretFields = Object.keys(dict).filter(field => metaOf(field)?.role === 'secret')
     expect(secretFields.sort()).toEqual([...KEY_FIELDS].sort())
+    expect(Object.keys(dict)).toHaveLength(18)
+    for (const field of Object.keys(dict)) expect(metaOf(field)?.volatile, field).toBe(true)
   })
   it('rejects out-of-range numbers', () => {
-    expect(() => new Config({ limit: 0 })).toThrow()
-    expect(() => new Config({ poolFactor: 9 })).toThrow()
-    expect(() => new Config({ deadlineMs: 10 })).toThrow()
+    expect(() => Config({ limit: 0 })).toThrow()
+    expect(() => Config({ poolFactor: 9 })).toThrow()
+    expect(() => Config({ deadlineMs: 10 })).toThrow()
   })
 })
 
@@ -178,6 +204,7 @@ describe('buildClient', () => {
   })
   it('throws a clear error when the whitelist leaves nothing enabled', () => {
     expect(() => buildClient(resolveConfig({ sources: ['unsplash'] }, {}))).toThrow(/no sources enabled/i)
+    expect(() => buildClient(resolveConfig({ sources: ['unsplash'] }, {}))).toThrow(/Plugins \(sidebar\) → refkit → Components → refkit/)
   })
 })
 

@@ -8,7 +8,7 @@
  */
 import { type ReactNode } from 'react';
 import type { ToolCallOwnerProps } from '@deepseek-ai/dsh-client-ui-tool/client';
-/** The slot component: dispatch by block lifecycle, degrade safely. */
+/** The slot component: dispatch by call phase, degrade safely. */
 export declare function RefkitCard(props: ToolCallOwnerProps): ReactNode;
 export default RefkitCard;
 //# sourceMappingURL=Card.d.ts.map
