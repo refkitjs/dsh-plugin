@@ -75,31 +75,36 @@ sources" description.
 
 ### P3 — Settings page (new; replaces D4's settings card)
 
-- The browser half registers keyed slot `plugins.row.config`, key `'@refkit/dsh-plugin#refkit'`,
-  registrant `'@refkit/dsh-plugin'`, inside the existing `ctx.inject(['slots'], …)` wiring with the
-  same try/catch guards as the toolview. Component: `RefkitSettingsPage(props:
-  PluginConfigViewProps)`.
-- `view === 'summary'` renders one line: "License-aware reference search · N keys set".
-- `view === 'page'` with `form?.state.status === 'ready'` renders two sections:
-  - **API keys**: one row per `KEY_FIELDS` entry — label (provider names it enables), a
-    set/not-set marker, a password input (never pre-filled; secrets are redacted on the wire),
-    **Save** (writes `{ op: 'set', path: [field], value }`) and **Clear** (`{ op: 'unset', path:
-    [field] }`). Markers come from `ctx.configForms.describe().getSnapshot().view?.namespaces
-    .find(n => n.ns === 'refkit')?.secrets`, reached only through an optional
-    `ctx.inject(['configForms'], …)` child; without it markers read "unknown".
-  - **Search**: `sources` as a checkbox list of the 23 provider ids (empty = all enabled), `limit`,
-    `poolFactor`, `deadlineMs`, `timeoutMs` as numeric inputs with the schema bounds, `rerank` and
-    `sourceConfidence` as switches, `userAgent` as a text input; one **Save** that writes only the
-    changed paths with `form.state.revision`; **Reset** unsets them.
-  - `form.mutate` resolving `false` (refused by the Host) shows an inline error; success shows a
-    transient "Saved".
-- Otherwise (no form, loading, failed fiber) the page shows a short explanatory line and never
-  throws.
-- UI primitives: `Button`, `Input`, `Switch` from `@deepseek-ai/dsh-client-ui-primitives` (a
-  platform seed module, value import allowed); everything else type-only.
-- Pure logic lives in `src/client/settings-model.ts` (DOM-free, unit-tested): building the draft
-  from `form.state`, diffing a draft into `SettingsPathOp[]`, validating numeric bounds, the
-  summary text.
+The page follows the pattern of dsh's own settings pages (`@deepseek-ai/dsh-client-ui-settings-web-search`,
+`-shell`, `-agent-loop`, `-subagent`), so it looks and behaves like the rest of the Plugins page.
+
+- **Where**: keyed slot `plugins.row.config`, key `'@refkit/dsh-plugin#refkit'`, registrant
+  `'@refkit/dsh-plugin'` — the `refkit` row on the `@refkit/dsh-plugin` bundle page gains a
+  configure control. Registered from the browser half inside the existing guarded
+  `ctx.inject(['slots'], …)` wiring, and only while the Host serves namespace `refkit`
+  (`ctx.configForms.whileServed` when available).
+- **State**: a controller built in an optional `ctx.inject(['configForms'], …)` child binds
+  `configForms.get('refkit')` and stages edits with the shared `SettingsFormModel` exported by
+  `@deepseek-ai/dsh-client-ui-primitives` (a platform seed module; value imports allowed). Field
+  specs: `settingsNumberField` for `limit`, `poolFactor`, `deadlineMs`, `timeoutMs`;
+  `settingsTextField` for `userAgent`; refkit-owned specs (pure, in `src/client/settings-model.ts`)
+  for the booleans `rerank` / `sourceConfidence` and for `sources` (comma-separated ids, validated
+  against the 23 provider ids; empty = all). Secret specs for the 10 keys write
+  `{ op: 'set', path: [field], value: text }` through the same form's `mutate`.
+- **Rendering**: `SettingsForm` frame (its own Save, saving, failed and read-only states) with two
+  groups: **API keys** — one `SettingsSecretField` per key, labelled with the providers it enables,
+  blank on load, a blank draft keeps the stored key, `configured` from the namespace's secret
+  presence markers (`configForms.describe()` → `namespaces.find(ns === 'refkit').secrets`), plus a
+  small **Remove** button beside a configured key that immediately writes `{ op: 'unset', path:
+  [field] }`; **Search** — `SettingsValueField`s for the numbers, `sources` and `userAgent` (each
+  with the Overridden badge and Reset that the component provides) and two `Switch`es.
+- **Summary view** (`view: 'summary'`): "License-aware reference search · N of 10 keys set".
+- **Copy**: all strings in `src/client/copy.ts` (English); schema bounds shown as hints.
+- **Degradation**: no configForms service, namespace not served, or fiber failed → the page shows
+  the form frame's unavailable line; nothing throws into the shell.
+- **Pure logic** in `src/client/settings-model.ts` (DOM-free, unit-tested): the boolean and
+  `sources` field specs (format/parse, invalid ids block the save), the secret spec factory, the
+  key → providers label table, and the summary text.
 
 ### P4 — Client types and bundle (amends D5, D9)
 
