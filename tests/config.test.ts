@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { met } from '@refkit/provider-met'
 import { polyhaven } from '@refkit/provider-polyhaven'
 import { rijksmuseum } from '@refkit/provider-rijksmuseum'
+import { wikimediaCommons } from '@refkit/provider-wikimedia-commons'
 import {
   Config, DEFAULTS, KEY_ENV, KEY_FIELDS, KEYLESS_IDS, PLUGIN_VERSION, PROVIDER_IDS, PROVIDER_REGISTRY,
   buildClient, enabledProviders, readConfig, resolveConfig,
@@ -22,6 +23,12 @@ vi.mock('@refkit/provider-rijksmuseum', async (importOriginal) => {
 vi.mock('@refkit/provider-polyhaven', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@refkit/provider-polyhaven')>()
   return { ...actual, polyhaven: vi.fn(actual.polyhaven) }
+})
+// wikimediaCommons does not expose the thumbnail width it was built with, so the
+// registry's requested config is asserted through the same spy pattern.
+vi.mock('@refkit/provider-wikimedia-commons', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@refkit/provider-wikimedia-commons')>()
+  return { ...actual, wikimediaCommons: vi.fn(actual.wikimediaCommons) }
 })
 
 const EXPECTED_IDS = [
@@ -123,6 +130,12 @@ describe('enabledProviders', () => {
     expect(vi.mocked(rijksmuseum)).toHaveBeenLastCalledWith({ maxObjects: 7 })
     make('polyhaven')
     expect(vi.mocked(polyhaven)).toHaveBeenLastCalledWith({ maxAssets: 7 })
+  })
+  it('wikimedia-commons requests a 500px thumbnail', () => {
+    const cfg = resolveConfig({}, {})
+    const make = (id: string) => PROVIDER_REGISTRY.find(e => e.id === id)!.make(cfg)
+    make('wikimedia-commons')
+    expect(vi.mocked(wikimediaCommons)).toHaveBeenLastCalledWith({ thumbWidth: 500 })
   })
 })
 

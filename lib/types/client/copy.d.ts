@@ -1,5 +1,6 @@
 /** UI strings for the card and the settings page. One object so a locale swap is one file. */
 export declare const COPY: {
+    readonly preparing: "Preparing refkit search…";
     readonly searching: "Searching refkit sources…";
     readonly refsFor: (count: number, query: string) => string;
     readonly intent: (intent: string) => string;

@@ -117,7 +117,7 @@ const DESCRIPTION =
   + 'Use for reference pictures, moodboards, textures/HDRIs, public-domain artworks, sound effects, music, poems and book passages — not for web pages. '
   + 'Pass `intent` when the user has said how the material will be used so every result carries a use-verdict and a ready credit line; pass `gateFor` to return only usable results. '
   + 'Results are references, not rights clearance. '
-  + `Sources: ${SOURCE_LIST}. Keyed sources are inactive until their key is set under Settings -> Plugins -> refkit.`
+  + `Sources: ${SOURCE_LIST}. Keyed sources are inactive until their key is set under Plugins (sidebar) → @refkit/dsh-plugin → refkit → Configure.`
 
 function message(err: unknown): string {
   const raw = err instanceof Error ? err.message : String(err)
@@ -167,8 +167,8 @@ export function toSourceStatus(status: ProviderSearchStatus): SourceStatus {
 function disabledHint(id: string, enabled: readonly string[], cfg: ResolvedConfig): string | undefined {
   const entry = PROVIDER_REGISTRY.find(e => e.id === id)
   if (entry === undefined || enabled.includes(id)) return undefined
-  if (entry.key !== undefined && cfg.keys[entry.key] === undefined) return `${id}: configure its key under Settings -> Plugins -> refkit.`
-  if (cfg.sources.length > 0 && !cfg.sources.includes(id)) return `${id}: excluded by the sources setting under Settings -> Plugins -> refkit.`
+  if (entry.key !== undefined && cfg.keys[entry.key] === undefined) return `${id}: configure its key under Plugins (sidebar) → @refkit/dsh-plugin → refkit → Configure.`
+  if (cfg.sources.length > 0 && !cfg.sources.includes(id)) return `${id}: excluded by the sources setting under Plugins (sidebar) → @refkit/dsh-plugin → refkit → Configure.`
   return undefined
 }
 

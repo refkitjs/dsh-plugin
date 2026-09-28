@@ -1,8 +1,9 @@
 # @refkit/dsh-plugin bundle patch: one row inserted into the profile roster.
 # Install with `dsh plugin --profile web add @refkit/dsh-plugin` (npm) or
 # `dsh plugin --profile web add github:refkitjs/dsh-plugin`. Keys go into
-# Settings -> Plugins -> refkit (or the REFKIT_* environment variables); the
-# non-secret defaults below can be overridden here or in the settings card.
+# Plugins (sidebar) → @refkit/dsh-plugin → refkit → Configure (or the
+# REFKIT_* environment variables); the non-secret defaults below can be
+# overridden here or in the settings page.
 - insert:
     - id: refkit
       name: '@refkit/dsh-plugin'

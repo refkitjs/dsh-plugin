@@ -116,6 +116,13 @@ function Header({ outcome }: { outcome: SearchOutcome }): ReactNode {
 
 /** The slot component: dispatch by call phase, degrade safely. */
 export function RefkitCard(props: ToolCallOwnerProps): ReactNode {
+  if (props.phase === 'preparing') {
+    return (
+      <div className="rk-root">
+        <div className="rk-head"><span className="rk-head-meta">{COPY.preparing}</span></div>
+      </div>
+    )
+  }
   if (props.phase !== 'result') return <RunningGrid />
   const block = props.block
   if (block.isError) {

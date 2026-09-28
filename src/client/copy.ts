@@ -1,5 +1,6 @@
 /** UI strings for the card and the settings page. One object so a locale swap is one file. */
 export const COPY = {
+  preparing: 'Preparing refkit search…',
   searching: 'Searching refkit sources…',
   refsFor: (count: number, query: string) => `${count} reference${count === 1 ? '' : 's'} for “${query}”`,
   intent: (intent: string) => `intent: ${intent}`,

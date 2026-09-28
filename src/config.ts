@@ -171,7 +171,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   { id: 'rijksmuseum', modalities: ['image'], make: cfg => rijksmuseum({ maxObjects: cfg.limit }) },
   { id: 'smithsonian', modalities: ['image'], key: 'smithsonianApiKey', make: cfg => smithsonian({ apiKey: k(cfg, 'smithsonianApiKey') }) },
   { id: 'unsplash', modalities: ['image'], key: 'unsplashAccessKey', make: cfg => unsplash({ accessKey: k(cfg, 'unsplashAccessKey') }) },
-  { id: 'wikimedia-commons', modalities: ['image'], make: () => wikimediaCommons() },
+  { id: 'wikimedia-commons', modalities: ['image'], make: () => wikimediaCommons({ thumbWidth: 500 }) },
 ]
 
 export const PROVIDER_IDS: readonly string[] = PROVIDER_REGISTRY.map(e => e.id)
@@ -238,7 +238,7 @@ export function enabledProviders(cfg: ResolvedConfig): ReferenceProvider[] {
 export function buildClient(cfg: ResolvedConfig, createClient: (opts: RefkitOptions) => RefkitClient = createRefkit): RefkitClient {
   const providers = enabledProviders(cfg)
   if (providers.length === 0) {
-    throw new Error('refkit: no sources enabled — add a key under Settings -> Plugins -> refkit or widen `sources`')
+    throw new Error('refkit: no sources enabled — add a key under Plugins (sidebar) → @refkit/dsh-plugin → refkit → Configure or widen `sources`')
   }
   return createClient({
     providers,
