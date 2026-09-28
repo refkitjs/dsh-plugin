@@ -238,7 +238,7 @@ export function enabledProviders(cfg: ResolvedConfig): ReferenceProvider[] {
 export function buildClient(cfg: ResolvedConfig, createClient: (opts: RefkitOptions) => RefkitClient = createRefkit): RefkitClient {
   const providers = enabledProviders(cfg)
   if (providers.length === 0) {
-    throw new Error('refkit: no sources enabled — add a key under Plugins (sidebar) → @refkit/dsh-plugin → refkit → Configure or widen `sources`')
+    throw new Error('refkit: no sources enabled — add a key under Plugins (sidebar) → refkit → Components → refkit or widen `sources`')
   }
   return createClient({
     providers,

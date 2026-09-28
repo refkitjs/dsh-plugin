@@ -8,7 +8,7 @@
 - **`refkit_rights`** — 针对不同的使用意图重新校验同一条许可证,无需重新搜索。
 - **网页卡片** — 缩略图网格;每个卡片都带许可证标签;绿 / 蓝 / 红 / 黄四色徽章分别对应 allowed(允许) / credit required(需署名) / not allowed(不允许) / needs review(需人工复核);一键复制署名文本。
 
-十一个来源无需任何密钥即可使用（Openverse、Met、Art Institute of Chicago、Wikimedia Commons、Rijksmuseum、Internet Archive、Project Gutenberg、PoetryDB、Poly Haven、ambientCG、nailbook）。其余来源在「插件（侧边栏）→ @refkit/dsh-plugin → refkit → 配置」里填入免费密钥即可启用。
+十一个来源无需任何密钥即可使用（Openverse、Met、Art Institute of Chicago、Wikimedia Commons、Rijksmuseum、Internet Archive、Project Gutenberg、PoetryDB、Poly Haven、ambientCG、nailbook）。其余来源在「插件（侧边栏）→ refkit → 包含的组件 → refkit」里填入免费密钥即可启用。
 
 ## 安装
 
@@ -22,7 +22,7 @@ dsh plugin --profile web add github:refkitjs/dsh-plugin
 
 ## 配置
 
-密钥和调优参数在「插件（侧边栏）→ @refkit/dsh-plugin → refkit → 配置」中设置(命名空间为 `refkit`);修改在下一次调用时生效,无需重启。所有 key 字段都是 `secret` 类型:设置页不会回显已保存的值(只显示 Set / Not set 标记),不会被记录日志,也不会返回给模型,并以明文形式存储在该 profile 的 `cordis.patch.yml` 中(文件权限 0600)。某个 key 留空时会依次回退读取下表列出的环境变量(`REFKIT_*` 优先)——与 `@refkit/mcp` 读取的变量名相同,因此同一份 `.env` 可以同时服务这两者。手动编辑后校验失败的 `cordis.patch.yml` 会使插件启动失败,直到修复为止。
+密钥和调优参数在「插件（侧边栏）→ refkit → 包含的组件 → refkit」中设置(命名空间为 `refkit`);修改在下一次调用时生效,无需重启。所有 key 字段都是 `secret` 类型:设置页不会回显已保存的值(只显示 Set / Not set 标记),不会被记录日志,也不会返回给模型,并以明文形式存储在该 profile 的 `cordis.patch.yml` 中(文件权限 0600)。某个 key 留空时会依次回退读取下表列出的环境变量(`REFKIT_*` 优先)——与 `@refkit/mcp` 读取的变量名相同,因此同一份 `.env` 可以同时服务这两者。手动编辑后校验失败的 `cordis.patch.yml` 会使插件启动失败,直到修复为止。
 
 | 字段 | 环境变量(先匹配者优先) | 启用的来源 |
 | --- | --- | --- |

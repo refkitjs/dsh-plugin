@@ -38,7 +38,7 @@ describe('schemas', () => {
   })
   it('the description points to the settings location', () => {
     const def = createSearchTool(deps([provider('a', [emit('https://a/1', 'CC0-1.0')])]))
-    expect(def.description).toMatch(/Plugins \(sidebar\) → @refkit\/dsh-plugin → refkit → Configure/)
+    expect(def.description).toMatch(/Plugins \(sidebar\) → refkit → Components → refkit/)
   })
 })
 
@@ -121,11 +121,11 @@ describe('runSearch', () => {
     expect((err as Error).message).not.toContain('Enabled source ids')
   })
   it('names the settings location for a known but unconfigured keyed source', async () => {
-    await expect(runSearch({ query: 'x', sources: ['unsplash'] }, deps([provider('a', [])]))).rejects.toThrow(/Plugins \(sidebar\) → @refkit\/dsh-plugin → refkit → Configure/)
+    await expect(runSearch({ query: 'x', sources: ['unsplash'] }, deps([provider('a', [])]))).rejects.toThrow(/Plugins \(sidebar\) → refkit → Components → refkit/)
   })
   it('names the sources setting for a known source excluded by the allowlist', async () => {
     const keyless = await runSearch({ query: 'x', sources: ['met'] }, deps([provider('a', [])], resolveConfig({ sources: ['a'] }, {}))).catch((e: Error) => e)
-    expect((keyless as Error).message).toMatch(/met: excluded by the sources setting under Plugins \(sidebar\) → @refkit\/dsh-plugin → refkit → Configure/)
+    expect((keyless as Error).message).toMatch(/met: excluded by the sources setting under Plugins \(sidebar\) → refkit → Components → refkit/)
     expect((keyless as Error).message).not.toMatch(/configure its key/)
     const keyed = await runSearch({ query: 'x', sources: ['unsplash'] }, deps([provider('a', [])], resolveConfig({ sources: ['a'], unsplashAccessKey: 'sekrit-unsplash-key' }, {}))).catch((e: Error) => e)
     expect((keyed as Error).message).toMatch(/unsplash: excluded by the sources setting/)

@@ -2,6 +2,7 @@
   "name": "@refkit/dsh-plugin",
   "version": "0.2.0",
   "description": "DeepSeek Harness plugin for refkit: license-normalized creative reference search across 23 sources from 19 provider packages and 4 modalities, a strict-deny use-gate, and a web card with license and use-verdict badges (refkit_search / refkit_rights).",
+  "icon": "./icon.svg",
   "type": "module",
   "license": "Apache-2.0",
   "keywords": ["dsh-plugin", "deepseek-harness", "refkit", "reference-search", "creative-commons", "license", "agent-tool"],
@@ -15,6 +16,7 @@
   "exports": {
     ".": { "types": "./lib/types/index.d.ts", "default": "./lib/index.js" },
     "./client": { "types": "./lib/types/client/index.d.ts", "default": "./lib/client.js" },
+    "./locale/*.json": "./locale/*.json",
     "./package.json": "./package.json"
   },
   "dsh": {
@@ -24,7 +26,7 @@
       "inject": ["@deepseek-ai/dsh-client-ui-tool", "@deepseek-ai/dsh-client-ui-conversation", "@deepseek-ai/dsh-client-ui-plugin-manager", "@deepseek-ai/dsh-client-ui-settings"]
     }
   },
-  "files": ["lib/**/*.js", "lib/**/*.js.map", "lib/**/*.d.ts", "lib/**/*.d.ts.map", "src", "cordis.patch.yml", "README.md", "README.zh.md", "LICENSE"],
+  "files": ["lib/**/*.js", "lib/**/*.js.map", "lib/**/*.d.ts", "lib/**/*.d.ts.map", "src", "cordis.patch.yml", "README.md", "README.zh.md", "LICENSE", "locale/*.json", "icon.svg"],
   "scripts": {
     "build": "tsc -b && tsdown",
     "typecheck": "tsc -b --pretty false && tsc -p tsconfig.tests.json --pretty false",
