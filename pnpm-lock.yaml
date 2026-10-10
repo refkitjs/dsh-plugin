@@ -12,8 +12,8 @@ importers:
         specifier: ^0.9.0
         version: 0.9.0
       '@refkit/provider-artic':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.4.1
+        version: 0.4.1
       '@refkit/provider-brave':
         specifier: ^0.4.0
         version: 0.4.0
@@ -42,8 +42,8 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0
       '@refkit/provider-openverse':
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.5.1
+        version: 0.5.1
       '@refkit/provider-pexels':
         specifier: ^0.4.0
         version: 0.4.0
@@ -708,8 +708,8 @@ packages:
   '@refkit/core@0.9.0':
     resolution: {integrity: sha512-5DFX7gsq/f2rCnHXViHWmvjtuUEJ3yXK7S9rAGxv8hV95GzygL3JyZDAhHtV4doqIru47mXCQG2JE00622AEuw==}
 
-  '@refkit/provider-artic@0.4.0':
-    resolution: {integrity: sha512-5HDMLOwaNqqzAxdrijojbefYY6KmfMRJoazFvRfGaSVNh//EvLYedx2SLRxobvdGmDZew7dbRd4hqSRKUMfpGg==}
+  '@refkit/provider-artic@0.4.1':
+    resolution: {integrity: sha512-/XWWEIKf9ZSYUYIYgttUNp1W65MFsOwK5o937xp6yseLObBhcMdnEiF+jbaKVdyRtqsPbxVUKUglk72wgLM1rA==}
 
   '@refkit/provider-brave@0.4.0':
     resolution: {integrity: sha512-xoglGGKzXWJm1lnvY39zqeFsTLGhaqW76mq5qHvQQCw8yMIKs4x0M+N0Heha2OhmdmoveBo7yOPlOu01butSBw==}
@@ -738,8 +738,8 @@ packages:
   '@refkit/provider-nailbook@0.2.0':
     resolution: {integrity: sha512-j4F+7lo1aN9RxiZ7WMt1m+jex+5FwsfKluiLzRN0Sh7UcHq4WYdfsGhrEcXTFcY3QUZMxcAstYOO47EN0WJSZQ==}
 
-  '@refkit/provider-openverse@0.5.0':
-    resolution: {integrity: sha512-dCJkCanRE+WByT4luWAIpBPA7+l1qplbQX4uELTWH42hNnYoqN40Xsot7eAgQbHMVvC0DmxHoOcLio+BCccc9g==}
+  '@refkit/provider-openverse@0.5.1':
+    resolution: {integrity: sha512-H/LbZ2PT7JH1sVqS6cSlpm6PYHXRxZKhpp6eIsVIA7l4j3P7H6SubcbY7vlhj5JmG4PfV3iqviVkCSaUq57xBg==}
 
   '@refkit/provider-pexels@0.4.0':
     resolution: {integrity: sha512-ItgBov1yf3dfBNVtE0NkzcfBJnfyBR9ySfG47RKGQ2qImNplalABSekY97gQ6h1qax/qKRjKYil7Zd+4yNJPaQ==}
@@ -2310,7 +2310,7 @@ snapshots:
     dependencies:
       zod: 4.6.5
 
-  '@refkit/provider-artic@0.4.0':
+  '@refkit/provider-artic@0.4.1':
     dependencies:
       '@refkit/core': 0.9.0
 
@@ -2350,7 +2350,7 @@ snapshots:
     dependencies:
       '@refkit/core': 0.9.0
 
-  '@refkit/provider-openverse@0.5.0':
+  '@refkit/provider-openverse@0.5.1':
     dependencies:
       '@refkit/core': 0.9.0
 

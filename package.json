@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@refkit/core": "^0.9.0",
-    "@refkit/provider-artic": "^0.4.0",
+    "@refkit/provider-artic": "^0.4.1",
     "@refkit/provider-brave": "^0.4.0",
     "@refkit/provider-europeana": "^0.5.0",
     "@refkit/provider-flickr": "^0.5.0",
@@ -49,7 +49,7 @@
     "@refkit/provider-jamendo": "^0.5.0",
     "@refkit/provider-met": "^0.4.0",
     "@refkit/provider-nailbook": "^0.2.0",
-    "@refkit/provider-openverse": "^0.5.0",
+    "@refkit/provider-openverse": "^0.5.1",
     "@refkit/provider-pexels": "^0.4.0",
     "@refkit/provider-pixabay": "^0.4.0",
     "@refkit/provider-poetrydb": "^0.4.0",
