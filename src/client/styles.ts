@@ -1,6 +1,6 @@
 /**
- * Card stylesheet, injected once as <style data-refkit-css> the first time the
- * card module evaluates. Classes are prefixed rk-; colours read the shell's
+ * Card and settings-page stylesheet, injected once as <style data-refkit-css>
+ * the first time either module evaluates. Classes are prefixed rk-; colours read the shell's
  * alias tokens with neutral fallbacks and adapt to prefers-color-scheme.
  * @module @refkit/dsh-plugin/client/styles
  */
@@ -36,9 +36,20 @@ export const CSS = `
 @keyframes rk-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 .rk-error { padding: 8px 10px; border-radius: 8px; font-size: 12px; color: #cf222e; background: rgba(207,34,46,.08); white-space: pre-wrap; }
 .rk-plain { font-size: 12px; white-space: pre-wrap; }
+.rk-set-group { display: flex; flex-direction: column; gap: 14px; margin: 0 0 22px; }
+.rk-set-heading { margin: 0; font-size: 13px; font-weight: 600; color: var(--dsw-alias-label-primary, inherit); }
+.rk-set-note { margin: -6px 0 0; font-size: 12px; line-height: 1.45; color: var(--dsw-alias-label-secondary, #656d76); }
+.rk-set-key-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: -6px; }
+.rk-set-error { font-size: 12px; color: #cf222e; }
+.rk-set-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rk-set-toggle-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rk-set-toggle-label { font-size: 13px; color: var(--dsw-alias-label-primary, inherit); }
+.rk-set-toggle-hint { font-size: 12px; color: var(--dsw-alias-label-secondary, #656d76); }
+.rk-set-toggle-side { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.rk-set-ids { margin: 0; font-family: ui-monospace, monospace; font-size: 12px; line-height: 1.6; }
 @media (prefers-color-scheme: dark) {
   .rk-root { color: var(--dsw-alias-label-primary, inherit); }
-  .rk-head-meta, .rk-legend, .rk-credit { color: var(--dsw-alias-label-secondary, #9198a1); }
+  .rk-head-meta, .rk-legend, .rk-credit, .rk-set-note, .rk-set-toggle-hint { color: var(--dsw-alias-label-secondary, #9198a1); }
   .rk-tile { border-color: var(--dsw-alias-border-l2, rgba(255,255,255,.12)); background: var(--dsw-alias-bg-base, rgba(255,255,255,.04)); }
   .rk-chip { border-color: var(--dsw-alias-border-l2, rgba(255,255,255,.14)); color: var(--dsw-alias-label-secondary, #9198a1); }
   .rk-btn { border-color: var(--dsw-alias-border-l2, rgba(255,255,255,.16)); }

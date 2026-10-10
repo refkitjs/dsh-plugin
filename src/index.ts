@@ -1,25 +1,28 @@
 /**
  * @refkit/dsh-plugin host half. Registers the refkit_search and refkit_rights
- * tools, the `refkit` settings section (BYOK keys, limits) and a short
- * system-prompt hint. The RefkitClient is rebuilt lazily whenever the
- * settings change, so a key typed into the card is live on the next call.
+ * tools and a short system-prompt hint. Every `Config` field is volatile: a
+ * settings edit commits into the same references and emits
+ * `loader/volatile-update` to this fiber, which re-resolves the configuration
+ * and drops the cached RefkitClient, so a new key is live on the next call
+ * without remounting the plugin.
  * @module @refkit/dsh-plugin
  */
 
 import type { Context } from '@deepseek-ai/cordis'
+import type {} from '@deepseek-ai/cordis-plugin-loader'
 import type {} from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-settings'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import { createRefkit, type RefkitClient, type RefkitOptions } from '@refkit/core'
-import { Config, buildClient, resolveConfig, validateConfig, type ResolvedConfig } from './config.ts'
+import { buildClient, readConfig, resolveConfig, type Config, type ResolvedConfig } from './config.ts'
 import { createRightsTool } from './tools/rights.ts'
 import { createSearchTool } from './tools/search.ts'
 
 export const name = 'refkit'
 export const inject = ['tools']
 
-export { Config } from './config.ts'
-export type { Config as RefkitPluginConfig, ResolvedConfig } from './config.ts'
+export { Config, readConfig } from './config.ts'
+export type { Config as RefkitPluginConfig, ConfigValues, ResolvedConfig } from './config.ts'
 export { PROVIDER_IDS, KEYLESS_IDS, PROVIDER_REGISTRY, resolveConfig, buildClient, PLUGIN_VERSION } from './config.ts'
 export { createSearchTool, runSearch, SEARCH_TOOL_NAME } from './tools/search.ts'
 export type { SearchArgs, SearchDeps } from './tools/search.ts'
@@ -48,24 +51,21 @@ export interface PluginHandles {
 
 /** Register everything; `deps` exists so tests can observe client construction. Returns the live handles the tools close over. */
 export function applyWith(ctx: Context, config: Config, deps: ApplyDeps): PluginHandles {
-  validateConfig(config)
   const env = deps.env ?? process.env
-  let source: () => Config = () => config
-  let resolved: ResolvedConfig = resolveConfig(source(), env)
+  let resolved: ResolvedConfig = resolveConfig(readConfig(config), env)
   let client: RefkitClient | null = null
-  const rebuild = (): void => {
-    resolved = resolveConfig(source(), env)
+  // The Loader commits a settings edit into the same references, then notifies this fiber only
+  // (an inject child never sees it). Re-read every reference and rebuild the client lazily.
+  ctx.on('loader/volatile-update', () => {
+    resolved = resolveConfig(readConfig(config), env)
     client = null
-  }
+  })
   const getConfig = (): ResolvedConfig => resolved
   const getClient = (): RefkitClient => (client ??= buildClient(resolved, deps.createClient))
 
-  ctx.inject(['settings'], (scope) => {
-    scope.settings.installSection(ctx, 'refkit', Config, config, {
-      setSource: (current) => { source = current as () => Config; rebuild() },
-      onChange: rebuild,
-      validate: (value) => validateConfig(value as Config),
-    })
+  // The plugin ships its own Plugins-page form, so opt out of any future auto-generated page.
+  ctx.inject(['settings'], (child) => {
+    child.effect(() => child.settings.configure({ auto: false }, ctx.fiber))
   })
 
   ctx.inject(['systemPrompt'], (scope) => {
@@ -77,7 +77,7 @@ export function applyWith(ctx: Context, config: Config, deps: ApplyDeps): Plugin
   return { getClient, getConfig }
 }
 
-/** Cordis entry point. */
-export function apply(ctx: Context, config: Config = {}): void {
+/** Cordis entry point; the Loader always supplies the live references. */
+export function apply(ctx: Context, config: Config): void {
   applyWith(ctx, config, { createClient: createRefkit })
 }

@@ -27,9 +27,10 @@ const registered = []
 const ctx = {
   inject: () => {},
   effect: () => () => {},
+  on: () => () => {},
   tools: { register: (def) => { registered.push(def.name); return () => {} } },
 }
-apply(ctx, {})
+apply(ctx, Config({}))
 console.log('registered tools:', registered.join(', '))
 console.log('registry ids:', PROVIDER_IDS.length)
 

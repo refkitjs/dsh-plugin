@@ -1,17 +1,19 @@
 /**
  * @refkit/dsh-plugin host half. Registers the refkit_search and refkit_rights
- * tools, the `refkit` settings section (BYOK keys, limits) and a short
- * system-prompt hint. The RefkitClient is rebuilt lazily whenever the
- * settings change, so a key typed into the card is live on the next call.
+ * tools and a short system-prompt hint. Every `Config` field is volatile: a
+ * settings edit commits into the same references and emits
+ * `loader/volatile-update` to this fiber, which re-resolves the configuration
+ * and drops the cached RefkitClient, so a new key is live on the next call
+ * without remounting the plugin.
  * @module @refkit/dsh-plugin
  */
 import type { Context } from '@deepseek-ai/cordis';
 import { type RefkitClient, type RefkitOptions } from '@refkit/core';
-import { Config, type ResolvedConfig } from './config.ts';
+import { type Config, type ResolvedConfig } from './config.ts';
 export declare const name = "refkit";
 export declare const inject: string[];
-export { Config } from './config.ts';
-export type { Config as RefkitPluginConfig, ResolvedConfig } from './config.ts';
+export { Config, readConfig } from './config.ts';
+export type { Config as RefkitPluginConfig, ConfigValues, ResolvedConfig } from './config.ts';
 export { PROVIDER_IDS, KEYLESS_IDS, PROVIDER_REGISTRY, resolveConfig, buildClient, PLUGIN_VERSION } from './config.ts';
 export { createSearchTool, runSearch, SEARCH_TOOL_NAME } from './tools/search.ts';
 export type { SearchArgs, SearchDeps } from './tools/search.ts';
@@ -33,6 +35,6 @@ export interface PluginHandles {
 }
 /** Register everything; `deps` exists so tests can observe client construction. Returns the live handles the tools close over. */
 export declare function applyWith(ctx: Context, config: Config, deps: ApplyDeps): PluginHandles;
-/** Cordis entry point. */
-export declare function apply(ctx: Context, config?: Config): void;
+/** Cordis entry point; the Loader always supplies the live references. */
+export declare function apply(ctx: Context, config: Config): void;
 //# sourceMappingURL=index.d.ts.map

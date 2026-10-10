@@ -1,5 +1,7 @@
 # @refkit/dsh-plugin — Design Spec
 
+Amended by `2026-09-28-dsh-017-port-design.md` (the dsh 0.1.7 port; sections not mentioned there stand unchanged).
+
 Status: approved in conversation 2026-09-20; written for review. First release 0.1.0.
 
 ## Goals
