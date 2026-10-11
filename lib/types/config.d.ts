@@ -80,7 +80,8 @@ export declare const KEYLESS_IDS: readonly string[];
  * plugin at startup. So when a provider is removed, move its id here instead of just deleting it.
  * A retired id is accepted by `sources` and is a no-op: `enabledProviders` filters by registry
  * entries, so it enables nothing. Mirror every change in RETIRED_SOURCE_IDS
- * (src/client/settings-model.ts); tests/config.test.ts (SHIPPED_IDS) fails until both are done.
+ * (src/client/settings-model.ts): tests/config.test.ts (SHIPPED_IDS) fails until RETIRED_IDS has
+ * it, and tests/settings-model.test.ts until RETIRED_SOURCE_IDS mirrors it.
  */
 export declare const RETIRED_IDS: readonly string[];
 /** The ids `sources` accepts: every live provider id plus every retired one. */

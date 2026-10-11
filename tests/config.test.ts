@@ -40,7 +40,8 @@ const EXPECTED_IDS = [
 
 /**
  * FROZEN. Every provider id that any release of this plugin has shipped (the 23 of 0.1.0 and 0.2.0).
- * Append an id when a release adds a provider; never edit or remove one. This list, not EXPECTED_IDS,
+ * Append an id in the same change that adds it to PROVIDER_REGISTRY (the test 'every live and every
+ * retired id is in SHIPPED_IDS' enforces this); never edit or remove one. This list, not EXPECTED_IDS,
  * is what keeps a stored `sources` whitelist valid: removing a provider from PROVIDER_REGISTRY must
  * move its id into RETIRED_IDS, and the test below fails until it does.
  */
@@ -80,6 +81,15 @@ describe('shipped source ids', () => {
       + 'that whitelists one would fail at startup. Do not delete an id from PROVIDER_REGISTRY: move it into RETIRED_IDS in '
       + 'src/config.ts (and into RETIRED_SOURCE_IDS in src/client/settings-model.ts) so it stays valid as a no-op.',
     ).toEqual([])
+  })
+  it('every live and every retired id is in SHIPPED_IDS', () => {
+    const unlisted = [...PROVIDER_IDS, ...RETIRED_IDS].filter(id => !SHIPPED_IDS.includes(id))
+    expect(
+      unlisted,
+      `Source id(s) ${unlisted.map(id => `'${id}'`).join(', ')} missing from SHIPPED_IDS: append every id you add to `
+      + 'PROVIDER_REGISTRY to SHIPPED_IDS in tests/config.test.ts (append only), so its later removal is guarded.',
+    ).toEqual([])
+    expect(new Set(SHIPPED_IDS).size).toBe(SHIPPED_IDS.length)
   })
   it('a live id is never also retired', () => {
     const both = RETIRED_IDS.filter(id => PROVIDER_IDS.includes(id))

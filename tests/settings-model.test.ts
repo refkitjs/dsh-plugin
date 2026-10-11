@@ -52,12 +52,6 @@ describe('settingsSourcesField', () => {
   it('collapses duplicates', () => {
     expect(spec.parse('met, met')).toEqual({ kind: 'set', value: ['met'] })
   })
-
-  it('accepts every retired id alongside the live ones, so a stored one never blocks the save', () => {
-    const accepting = settingsSourcesField('sources', [...SOURCE_IDS, ...RETIRED_SOURCE_IDS])
-    // Vacuous while RETIRED_SOURCE_IDS is empty; the controller test proves the wiring with a fake id.
-    for (const id of RETIRED_SOURCE_IDS) expect(accepting.parse(`met, ${id}`)).toEqual({ kind: 'set', value: ['met', id] })
-  })
 })
 
 describe('settingsBoundedNumberField', () => {
