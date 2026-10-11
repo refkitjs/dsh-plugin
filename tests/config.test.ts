@@ -1,12 +1,13 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
+import z from '@deepseek-ai/schemastery'
 import { met } from '@refkit/provider-met'
 import { polyhaven } from '@refkit/provider-polyhaven'
 import { rijksmuseum } from '@refkit/provider-rijksmuseum'
 import { wikimediaCommons } from '@refkit/provider-wikimedia-commons'
 import {
-  Config, DEFAULTS, KEY_ENV, KEY_FIELDS, KEYLESS_IDS, PLUGIN_VERSION, PROVIDER_IDS, PROVIDER_REGISTRY,
-  buildClient, enabledProviders, readConfig, resolveConfig,
+  Config, DEFAULTS, KEY_ENV, KEY_FIELDS, KEYLESS_IDS, PLUGIN_VERSION, PROVIDER_IDS, PROVIDER_REGISTRY, RETIRED_IDS,
+  buildClient, enabledProviders, readConfig, resolveConfig, sourceIdUnion,
 } from '../src/config.ts'
 
 // The three N+1 sources' factories are wrapped in spies that still call the real
@@ -37,6 +38,19 @@ const EXPECTED_IDS = [
   'polyhaven', 'ambientcg', 'rijksmuseum', 'smithsonian', 'unsplash', 'wikimedia-commons',
 ].sort()
 
+/**
+ * FROZEN. Every provider id that any release of this plugin has shipped (the 23 of 0.1.0 and 0.2.0).
+ * Append an id in the same change that adds it to PROVIDER_REGISTRY (the test 'every live and every
+ * retired id is in SHIPPED_IDS' enforces this); never edit or remove one. This list, not EXPECTED_IDS,
+ * is what keeps a stored `sources` whitelist valid: removing a provider from PROVIDER_REGISTRY must
+ * move its id into RETIRED_IDS, and the test below fails until it does.
+ */
+const SHIPPED_IDS: readonly string[] = [
+  'artic', 'brave', 'europeana', 'flickr', 'freesound', 'gutendex', 'internet-archive', 'jamendo', 'met',
+  'nailbook', 'openverse', 'openverse-audio', 'pexels', 'pexels-video', 'pixabay', 'pixabay-video', 'poetrydb',
+  'polyhaven', 'ambientcg', 'rijksmuseum', 'smithsonian', 'unsplash', 'wikimedia-commons',
+]
+
 describe('provider registry', () => {
   it('pins the 23 factory ids from the 19 packages', () => {
     expect([...PROVIDER_IDS].sort()).toEqual(EXPECTED_IDS)
@@ -54,6 +68,35 @@ describe('provider registry', () => {
     expect([...KEYLESS_IDS].sort()).toEqual(PROVIDER_REGISTRY.filter(e => e.key === undefined).map(e => e.id).sort())
     expect(KEYLESS_IDS).toContain('openverse')
     expect(KEYLESS_IDS).not.toContain('unsplash')
+  })
+})
+
+describe('shipped source ids', () => {
+  it('every id that has shipped is still accepted by `sources`', () => {
+    const accepted = new Set([...PROVIDER_IDS, ...RETIRED_IDS])
+    const dropped = SHIPPED_IDS.filter(id => !accepted.has(id))
+    expect(
+      dropped,
+      `Shipped source id(s) ${dropped.map(id => `'${id}'`).join(', ')} no longer accepted by \`sources\`: a stored cordis.patch.yml `
+      + 'that whitelists one would fail at startup. Do not delete an id from PROVIDER_REGISTRY: move it into RETIRED_IDS in '
+      + 'src/config.ts (and into RETIRED_SOURCE_IDS in src/client/settings-model.ts) so it stays valid as a no-op.',
+    ).toEqual([])
+  })
+  it('every live and every retired id is in SHIPPED_IDS', () => {
+    const unlisted = [...PROVIDER_IDS, ...RETIRED_IDS].filter(id => !SHIPPED_IDS.includes(id))
+    expect(
+      unlisted,
+      `Source id(s) ${unlisted.map(id => `'${id}'`).join(', ')} missing from SHIPPED_IDS: append every id you add to `
+      + 'PROVIDER_REGISTRY to SHIPPED_IDS in tests/config.test.ts (append only), so its later removal is guarded.',
+    ).toEqual([])
+    expect(new Set(SHIPPED_IDS).size).toBe(SHIPPED_IDS.length)
+  })
+  it('a live id is never also retired', () => {
+    const both = RETIRED_IDS.filter(id => PROVIDER_IDS.includes(id))
+    expect(both, `id(s) ${both.join(', ')} are in both PROVIDER_REGISTRY and RETIRED_IDS; an id is one or the other`).toEqual([])
+  })
+  it('retired ids are listed once each', () => {
+    expect(new Set(RETIRED_IDS).size).toBe(RETIRED_IDS.length)
   })
 })
 
@@ -121,6 +164,10 @@ describe('enabledProviders', () => {
     const ids = enabledProviders(resolveConfig({ sources: ['met', 'unsplash', 'artic'] }, {})).map(p => p.id)
     expect(ids).toEqual(['artic', 'met'])
   })
+  it('a whitelisted id with no registry entry (a retired id) enables nothing and breaks nothing', () => {
+    const ids = enabledProviders(resolveConfig({ sources: ['met', 'retired-fake'] }, {})).map(p => p.id)
+    expect(ids).toEqual(['met'])
+  })
   it('museum detail fetches are capped at the configured limit', () => {
     const cfg = resolveConfig({ limit: 7 }, {})
     const make = (id: string) => PROVIDER_REGISTRY.find(e => e.id === id)!.make(cfg)
@@ -146,6 +193,33 @@ describe('sources schema', () => {
   })
   it('accepts known ids', () => {
     expect(() => Config({ sources: ['met', 'unsplash'] })).not.toThrow()
+  })
+  it('accepts every id that has shipped', () => {
+    expect(() => Config({ sources: [...SHIPPED_IDS] })).not.toThrow()
+  })
+  it('accepts every retired id', () => {
+    // Vacuous while RETIRED_IDS is empty (nothing has been retired yet); it starts to
+    // bite the day the first id moves there. The next test proves the mechanism today.
+    expect(() => Config({ sources: [...RETIRED_IDS] })).not.toThrow()
+  })
+})
+
+describe('sourceIdUnion', () => {
+  const union = sourceIdUnion(['live-a', 'live-b'], ['gone'])
+  it('accepts current ids and retired ids alike', () => {
+    expect(union('live-a')).toBe('live-a')
+    expect(union('gone')).toBe('gone')
+  })
+  it('still rejects an id that is in neither list, naming both kinds', () => {
+    expect(() => union('typo')).toThrow(/typo/)
+    expect(() => union('typo')).toThrow(/live-b/)
+    expect(() => union('typo')).toThrow(/gone/)
+  })
+  it('with no retired ids is exactly the current ids', () => {
+    expect(() => sourceIdUnion(['live-a'], [])('gone')).toThrow(/gone/)
+  })
+  it('a list of them validates mixed current and retired ids', () => {
+    expect(z.array(union)(['gone', 'live-a'])).toEqual(['gone', 'live-a'])
   })
 })
 

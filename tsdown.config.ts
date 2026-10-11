@@ -1,21 +1,16 @@
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import type { UserConfig } from 'tsdown'
+import clientExternals from './scripts/client-externals.json' with { type: 'json' }
 
 const ID = '@refkit/dsh-plugin'
 
-/** Platform seed modules the dsh web shell shares into the frozen module table. */
-export const CLIENT_EXTERNALS: readonly string[] = [
-  'react',
-  'react/jsx-runtime',
-  'react-dom',
-  'react-dom/client',
-  '@deepseek-ai/cordis',
-  '@deepseek-ai/dsh-client-store',
-  '@deepseek-ai/dsh-client-ui-slots',
-  '@deepseek-ai/dsh-client-ui-primitives',
-  '@deepseek-ai/dsh-client-ui-dockkit',
-]
+/**
+ * Platform seed modules the dsh web shell shares into the frozen module table.
+ * The ids live in scripts/client-externals.json so the bundle check reads the
+ * very same table; the file is build-time only and never ships.
+ */
+export const CLIENT_EXTERNALS: readonly string[] = clientExternals
 
 /** Host-side externals: peers from the profile tree plus our declared runtime deps. */
 const HOST_EXTERNAL: readonly (string | RegExp)[] = [

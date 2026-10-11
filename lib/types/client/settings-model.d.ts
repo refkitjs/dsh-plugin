@@ -23,6 +23,11 @@ export declare const KEY_FIELDS_CLIENT: readonly string[];
 export declare const KEY_ENV_HINT: Readonly<Record<string, readonly string[]>>;
 /** Every provider id `sources` accepts (mirrors `PROVIDER_IDS`). */
 export declare const SOURCE_IDS: readonly string[];
+/**
+ * Ids that once shipped and were since removed (mirrors `RETIRED_IDS`). `sources` still accepts
+ * them, so a stored one never blocks saving the page, but the page does not list them.
+ */
+export declare const RETIRED_SOURCE_IDS: readonly string[];
 /** Inclusive bounds and schema default of one whole-number field. */
 export interface NumberBounds {
     min: number;

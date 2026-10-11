@@ -73,9 +73,24 @@ export declare const PROVIDER_REGISTRY: readonly ProviderEntry[];
 export declare const PROVIDER_IDS: readonly string[];
 export declare const KEYLESS_IDS: readonly string[];
 /**
+ * Provider ids that once shipped and have since been removed from PROVIDER_REGISTRY.
+ *
+ * The rule: an id that has ever been released stays valid in `sources` forever. A user may have
+ * whitelisted it in `cordis.patch.yml`, and a stored config that no longer validates fails the
+ * plugin at startup. So when a provider is removed, move its id here instead of just deleting it.
+ * A retired id is accepted by `sources` and is a no-op: `enabledProviders` filters by registry
+ * entries, so it enables nothing. Mirror every change in RETIRED_SOURCE_IDS
+ * (src/client/settings-model.ts): tests/config.test.ts (SHIPPED_IDS) fails until RETIRED_IDS has
+ * it, and tests/settings-model.test.ts until RETIRED_SOURCE_IDS mirrors it.
+ */
+export declare const RETIRED_IDS: readonly string[];
+/** The ids `sources` accepts: every live provider id plus every retired one. */
+export declare function sourceIdUnion(current: readonly string[], retired: readonly string[]): z<string, string, "plain">;
+/**
  * Schemastery schema. Every field is volatile: a settings edit commits into the
  * same references and emits `loader/volatile-update` instead of remounting the
- * plugin. An unknown `sources` id fails validation, so the Host refuses the write.
+ * plugin. An unknown `sources` id fails validation, so the Host refuses the write; a retired
+ * one (RETIRED_IDS) still validates, so a stored whitelist survives a provider's removal.
  */
 export declare const Config: z<Schemastery.ObjectS<NoInfer<{
     unsplashAccessKey: z<string, string, "volatile">;

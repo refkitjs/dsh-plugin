@@ -19,7 +19,7 @@ import {
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { HostObservable } from '@deepseek-ai/dsh-client-ui-slots'
 import {
-  KEY_FIELDS_CLIENT, NUMBER_BOUNDS, SETTINGS_NS, SOURCE_IDS,
+  KEY_FIELDS_CLIENT, NUMBER_BOUNDS, RETIRED_SOURCE_IDS, SETTINGS_NS, SOURCE_IDS,
   configuredKeys, secretSpec, settingsBooleanField, settingsBoundedNumberField, settingsSourcesField,
   type NumberField,
 } from './settings-model.ts'
@@ -76,7 +76,7 @@ export function createSettingsController(configForms: Pick<ConfigForms, 'get' | 
   const write = (ops: readonly SettingsFormPathOp[]): Promise<boolean> => scope.mutate(ops)
   const model = new SettingsFormModel(scope, [
     ...NUMBER_FIELDS.map(field => settingsBoundedNumberField(field, NUMBER_BOUNDS[field])),
-    settingsSourcesField('sources', SOURCE_IDS),
+    settingsSourcesField('sources', [...SOURCE_IDS, ...RETIRED_SOURCE_IDS]),
     settingsTextField('userAgent'),
     ...TOGGLE_FIELDS.map(field => settingsBooleanField(field)),
   ], KEY_FIELDS_CLIENT.map(field => secretSpec(field, write)))

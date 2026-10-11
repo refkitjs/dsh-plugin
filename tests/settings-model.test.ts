@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { Config, KEY_ENV, KEY_FIELDS, PROVIDER_IDS } from '../src/config.ts'
+import { Config, KEY_ENV, KEY_FIELDS, PROVIDER_IDS, RETIRED_IDS } from '../src/config.ts'
 import {
-  KEY_ENV_HINT, KEY_LABELS, NUMBER_BOUNDS, SOURCE_IDS,
+  KEY_ENV_HINT, KEY_LABELS, NUMBER_BOUNDS, RETIRED_SOURCE_IDS, SOURCE_IDS,
   configuredKeys, secretSpec, settingsBooleanField, settingsBoundedNumberField, settingsSourcesField, summaryText,
 } from '../src/client/settings-model.ts'
 
@@ -129,6 +129,10 @@ describe('static client tables mirror src/config.ts', () => {
 
   it('lists exactly the provider ids', () => {
     expect([...SOURCE_IDS].sort()).toEqual([...PROVIDER_IDS].sort())
+  })
+
+  it('lists exactly the retired ids', () => {
+    expect([...RETIRED_SOURCE_IDS].sort()).toEqual([...RETIRED_IDS].sort())
   })
 
   it('uses the schema bounds and defaults for the number fields', () => {
