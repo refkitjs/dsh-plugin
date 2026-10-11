@@ -66,10 +66,13 @@ function fakeSlots(declared: readonly string[] = [TOOLVIEW, ROW_CONFIG]) {
 /**
  * The settings domain over one `refkit` namespace: a ConfigForm and the
  * describe mirror (both counting subscribers, which is how a released
- * controller shows), and whileServed driven by `serve` / `unserve` the way the
- * mirror's notification drives it.
+ * controller shows), and whileServed over a set of served namespaces. As the
+ * real one does (its `sync()` before returning), whileServed registers at once
+ * when a watched namespace is already served; afterwards `serve` / `unserve`
+ * drive it the way the mirror's notification does.
  */
-function fakeConfigForms(storedKeys: readonly string[] = []) {
+function fakeConfigForms({ storedKeys = [], served: initiallyServed = [] }: { storedKeys?: readonly string[]; served?: readonly string[] } = {}) {
+  const served = new Set(initiallyServed)
   const formListeners = new Set<() => void>()
   const mirrorListeners = new Set<() => void>()
   const requested: string[] = []
@@ -106,8 +109,16 @@ function fakeConfigForms(storedKeys: readonly string[] = []) {
     whileServed: (namespaces, register) => {
       const watch: (typeof watches)[number] = { namespaces: [...namespaces], register, ended: false }
       watches.push(watch)
+      sync(watch)
       return () => { watch.ended = true; watch.live?.(); watch.live = undefined }
     },
+  }
+  /** Register a watch while one of its namespaces is served, dispose it once none is. */
+  function sync(watch: (typeof watches)[number]): void {
+    if (watch.ended) return
+    const watched = watch.namespaces.some(ns => served.has(ns))
+    if (watched && !watch.live) watch.live = watch.register(new Set(served))
+    else if (!watched && watch.live) { watch.live(); watch.live = undefined }
   }
   return {
     service,
@@ -116,11 +127,13 @@ function fakeConfigForms(storedKeys: readonly string[] = []) {
     subscribers: (): number => formListeners.size + mirrorListeners.size,
     /** The Host starts serving `ns`: every open watch on it registers. */
     serve(ns: string): void {
-      for (const watch of watches) if (!watch.ended && !watch.live && watch.namespaces.includes(ns)) watch.live = watch.register(new Set([ns]))
+      served.add(ns)
+      for (const watch of watches) sync(watch)
     },
     /** The Host stops serving every namespace: every live registration is disposed. */
     unserve(): void {
-      for (const watch of watches) { watch.live?.(); watch.live = undefined }
+      served.clear()
+      for (const watch of watches) sync(watch)
     },
   }
 }
@@ -170,7 +183,7 @@ function fakeCordis(services: Services) {
 
 function boot(options: { slots?: ReturnType<typeof fakeSlots>; settings?: ReturnType<typeof fakeConfigForms> | null } = {}) {
   const slots = options.slots ?? fakeSlots()
-  const settings = options.settings === null ? undefined : (options.settings ?? fakeConfigForms(['braveToken']))
+  const settings = options.settings === null ? undefined : (options.settings ?? fakeConfigForms({ storedKeys: ['braveToken'] }))
   const cordis = fakeCordis({ slots: slots.face, configForms: settings?.service })
   cordis.load()
   return { slots, settings, cordis }
@@ -210,6 +223,21 @@ describe('client apply', () => {
     expect(slots.registrations(ROW_CONFIG)).toEqual([])
     settings!.serve('refkit')
     expect(slots.registrations(ROW_CONFIG)).toHaveLength(1)
+    expect(cordis.errors()).toEqual([])
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('page registers at load when refkit is already served', () => {
+    // The usual live case: the mirror already serves refkit, so the page registers inside the settings effect itself.
+    const { slots, settings, cordis } = boot({ settings: fakeConfigForms({ storedKeys: ['braveToken'], served: ['refkit'] }) })
+    const pages = slots.registrations(ROW_CONFIG)
+    expect(pages).toHaveLength(1)
+    expect(pages[0]!.options).toEqual({ ...PAGE_OPTIONS, inject: expect.any(Function) })
+    expect(pages[0]!.component).toBe(RefkitSettingsPage)
+    const face = pages[0]!.options.inject!() as RefkitSettingsFace
+    expect(face.hooks.refkitSettings.getSnapshot().configured).toEqual(['braveToken'])
+    settings!.unserve()
+    expect(slots.registrations(ROW_CONFIG)).toEqual([])
     expect(cordis.errors()).toEqual([])
     expect(warn).not.toHaveBeenCalled()
   })
