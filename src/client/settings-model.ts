@@ -57,6 +57,12 @@ export const SOURCE_IDS: readonly string[] = [
   'poetrydb', 'polyhaven', 'ambientcg', 'rijksmuseum', 'smithsonian', 'unsplash', 'wikimedia-commons',
 ]
 
+/**
+ * Ids that once shipped and were since removed (mirrors `RETIRED_IDS`). `sources` still accepts
+ * them, so a stored one never blocks saving the page, but the page does not list them.
+ */
+export const RETIRED_SOURCE_IDS: readonly string[] = []
+
 /** Inclusive bounds and schema default of one whole-number field. */
 export interface NumberBounds {
   min: number

@@ -3,6 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 /** dsh's REAL SettingsFormModel, evaluated from the primitives build (see the helper). */
 vi.mock('@deepseek-ai/dsh-client-ui-primitives', async () => (await import('./support/primitives-form-model.ts')).primitivesFormModel())
 
+/**
+ * RETIRED_SOURCE_IDS is empty in production, so the wiring that lets a retired id through
+ * is proved with a fake one injected here; every other export is the real module's.
+ */
+vi.mock('../src/client/settings-model.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../src/client/settings-model.ts')>()),
+  RETIRED_SOURCE_IDS: ['retired-fake'],
+}))
+
 const { createSettingsController } = await import('../src/client/settings-controller.ts')
 type Controller = ReturnType<typeof createSettingsController>
 type Face = Controller['face']
@@ -181,5 +190,22 @@ describe('createSettingsController', () => {
     expect(state().configured).toEqual(['pexelsApiKey', 'braveToken'])
     face.edit('limit', '20')
     expect(state().dirty).toBe(true)
+  })
+
+  it('saves a sources list that holds a retired id, so a stored one never blocks the page', async () => {
+    face.edit('sources', 'met, retired-fake')
+    expect(state().fields.sources.invalid).toBe(false)
+    face.save()
+    await settle()
+    expect(state().failed).toBe(false)
+    expect(host.calls.at(-1)!.ops).toEqual([{ op: 'set', path: ['sources'], value: ['met', 'retired-fake'] }])
+  })
+
+  it('still refuses an id that never shipped, and writes nothing', async () => {
+    face.edit('sources', 'met, never-shipped')
+    expect(state().fields.sources.invalid).toBe(true)
+    face.save()
+    await settle()
+    expect(host.calls).toHaveLength(0)
   })
 })
