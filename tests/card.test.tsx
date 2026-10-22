@@ -23,13 +23,16 @@ const common: ToolCallCommonProps = {
   loadImage: async () => '',
 }
 
-const head = { callId: CALL_ID, name: 'refkit_search', turn: 1, step: 1, time: 0, subCalls: [] }
+/** dsh's lazy argument view on every stage; the card renders from argsRaw and the result content, never from it. */
+const argsView = {} as ResultBlock['args']
+
+const head = { callId: CALL_ID, name: 'refkit_search', args: argsView, turn: 1, step: 1, time: 0, subCalls: [] }
 
 function result(block: Pick<ResultBlock, 'content' | 'isError'> & Partial<ResultBlock>): ToolCallOwnerProps {
   return {
     ...common,
     phase: 'result',
-    block: { kind: 'tool-result', seq: 2, time: 0, callId: CALL_ID, call: { name: 'refkit_search', argsRaw: ARGS }, callTime: 0, subCalls: [], ...block },
+    block: { kind: 'tool-result', seq: 2, time: 0, callId: CALL_ID, name: 'refkit_search', args: argsView, call: { name: 'refkit_search', argsRaw: ARGS }, callTime: 0, subCalls: [], ...block },
   }
 }
 

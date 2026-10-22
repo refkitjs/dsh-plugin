@@ -7,6 +7,8 @@ const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url),
   icon?: string
   exports?: Record<string, unknown>
   files?: string[]
+  engines?: Record<string, string>
+  peerDependencies?: Record<string, string>
 }
 
 function readLocale(lang: string): unknown {
@@ -40,5 +42,21 @@ describe('package.json display metadata', () => {
   it('lists the locale files and the icon in files', () => {
     expect(pkg.files).toContain('locale/*.json')
     expect(pkg.files).toContain('icon.svg')
+  })
+})
+
+// dsh 0.2.1 decides compatibility from engines.dsh alone; dsh 0.1.7 and pnpm read the
+// dsh-* peers. Both must name the same releases, or one host refuses what the other loads.
+describe('dsh compatibility range', () => {
+  const DSH_RANGE = '^0.1.7-rc.2 || ^0.2.1-rc.2'
+
+  it('declares dsh 0.1.7 and 0.2.1 in engines.dsh', () => {
+    expect(pkg.engines?.dsh).toBe(DSH_RANGE)
+  })
+
+  it('gives every dsh-* peer the same range', () => {
+    const dshPeers = Object.entries(pkg.peerDependencies ?? {}).filter(([name]) => name.startsWith('@deepseek-ai/dsh-'))
+    expect(dshPeers.length).toBeGreaterThan(0)
+    for (const [name, range] of dshPeers) expect(range, name).toBe(DSH_RANGE)
   })
 })
