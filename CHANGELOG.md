@@ -4,6 +4,7 @@
 
 Built on refkit core 0.10 and the provider releases that go with it; they come in as dependencies, nothing to install by hand.
 
+- **dsh 0.2.1.** Runs on dsh 0.2.1-rc.2 as well as 0.1.7-rc.2: `engines.dsh` and the dsh peers are `^0.1.7-rc.2 || ^0.2.1-rc.2`. dsh 0.2.1 refuses 0.2.0, so if you upgraded dsh with 0.2.0 installed, remove the plugin and add it again.
 - **24 sources.** The new `polyhaven-hdri` source searches Poly Haven's HDRIs (no key needed), next to `polyhaven` for its textures.
 - **Durations.** Audio and video results carry `durationSec`. The card shows it as an `m:ss` badge, and the result text the model reads names it after the source (`freesound — 1:05`). The sources that report a length are openverse-audio, freesound, jamendo, pexels-video and pixabay-video.
 - **Album art and video posters on the card.** A video tile shows its poster under a ▶ mark, never the video file. An audio tile shows its album art and falls back to ♪ when there is none.
