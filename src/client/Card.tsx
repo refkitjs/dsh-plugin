@@ -61,8 +61,9 @@ function hideOnError(e: SyntheticEvent<HTMLImageElement>): void {
   e.currentTarget.style.display = 'none'
 }
 
-function Cover({ src, alt }: { src: string; alt: string }): ReactNode {
-  return <img className="rk-cover" src={src} alt={alt} loading="lazy" referrerPolicy="no-referrer" onError={hideOnError} />
+/** A poster or album art: decorative, since the title already shows in `.rk-title`. */
+function Cover({ src }: { src: string }): ReactNode {
+  return <img className="rk-cover" src={src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={hideOnError} />
 }
 
 function Media({ tile }: { tile: RefTile }): ReactNode {
@@ -79,11 +80,11 @@ function Media({ tile }: { tile: RefTile }): ReactNode {
     case 'video':
       // The poster only: a video's `preview` is the video file itself.
       return tile.thumbnail
-        ? <><Cover src={tile.thumbnail} alt={alt} /><span className="rk-play" aria-hidden="true">▶</span></>
+        ? <><Cover src={tile.thumbnail} /><span className="rk-play" aria-hidden="true">▶</span></>
         : <div className="rk-media-glyph" aria-label="video">▶</div>
     case 'audio':
       // Album art covers the ♪, which shows through when there is none or it fails to load.
-      return <><div className="rk-media-glyph" aria-label="audio">♪</div>{tile.thumbnail && <Cover src={tile.thumbnail} alt={alt} />}</>
+      return <><div className="rk-media-glyph" aria-label="audio">♪</div>{tile.thumbnail && <Cover src={tile.thumbnail} />}</>
   }
 }
 

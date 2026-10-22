@@ -4,7 +4,7 @@
 
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（dsh）插件，封装了 [refkit](https://github.com/refkitjs/refkit) 参考搜索库：将经过许可证归一化处理的创意素材搜索能力，变成原生 agent 工具，并配有网页卡片，在每条结果上展示许可证与使用判定。
 
-- **`refkit_search`** — 一次调用即可扇出到多达 24 个来源(Openverse 图片与音频、Met、Art Institute of Chicago、Wikimedia Commons、Rijksmuseum、Smithsonian、Internet Archive、Project Gutenberg、PoetryDB、Poly Haven 纹理与 HDRI、ambientCG、Europeana、Unsplash、Pexels、Pixabay、Flickr、Freesound、Jamendo、Brave、nailbook),合并并重新排序结果,并为每条结果返回其来源 id、许可证 id、canonical 链接、音频和视频的时长,以及——当你传入 `intent` 时——使用判定和一条可直接使用的署名文本。
+- **`refkit_search`** — 一次调用即可扇出到多达 24 个来源(Openverse 图片与音频、Met、Art Institute of Chicago、Wikimedia Commons、Rijksmuseum、Smithsonian、Internet Archive、Project Gutenberg、PoetryDB、Poly Haven 纹理与 HDRI、ambientCG、Europeana、Unsplash、Pexels、Pixabay、Flickr、Freesound、Jamendo、Brave、nailbook),合并并重新排序结果,并为每条结果返回其来源 id、许可证 id、canonical 链接、音频和视频的时长（来源提供时）,以及——当你传入 `intent` 时——使用判定和一条可直接使用的署名文本。
 - **`refkit_rights`** — 针对不同的使用意图重新校验同一条许可证,无需重新搜索。
 - **网页卡片** — 缩略图网格;每个卡片都带来源和许可证标签;视频显示封面帧并叠加播放标记,音频显示专辑封面,两者都带 `m:ss` 时长徽章;绿 / 蓝 / 红 / 黄四色徽章分别对应 allowed(允许) / credit required(需署名) / not allowed(不允许) / needs review(需人工复核);一键复制署名文本。
 
@@ -65,7 +65,7 @@ dsh plugin --profile web add github:refkitjs/dsh-plugin
 | `minRelevance` | 0–1 | 丢弃重排序分数低于该值的结果 |
 | `explain` | boolean | 在 `meta` 下附带每个来源的诊断信息 |
 
-每条结果都标明其来源 id(`source`),并带有许可证、canonical 链接、缩略图(视频的封面帧、音轨的专辑封面),音频和视频还带有 `durationSec`(时长,秒);`width`/`height` 是原件尺寸,来源未提供时取预览文件的尺寸。
+每条结果都标明其来源 id(`source`),并带有许可证、canonical 链接、缩略图(视频的封面帧、音轨的专辑封面),音频和视频在来源提供时还带有 `durationSec`(时长,秒);`width`/`height` 是原件尺寸,来源未提供时取预览文件的尺寸。
 
 示例提示词:“find me reference photos of brutalist libraries I can use in a commercial pitch deck”、“给我找几张可以商用的赛博朋克街景参考图”、“a public-domain poem about the sea for a poster”、“找一张户外 HDRI 用来给产品渲染打光”、“一段用于游戏预告片的短雨声音效”。
 

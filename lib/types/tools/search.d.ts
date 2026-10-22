@@ -56,7 +56,7 @@ export declare const SEARCH_PARAMETERS: {
     readonly controls: {
         readonly type: "object";
         readonly additionalProperties: false;
-        readonly description: "Provider-neutral search controls; each source applies the ones it supports and the rest are reported as ignored.";
+        readonly description: "Source-neutral search controls; each source applies the ones it supports and the rest are reported as ignored.";
         readonly properties: {
             readonly orientation: {
                 readonly type: "string";
@@ -143,7 +143,7 @@ export declare const SEARCH_PARAMETERS: {
             };
             readonly page: {
                 readonly type: "integer";
-                readonly description: "provider-local page (1-based)";
+                readonly description: "source-local page (1-based)";
             };
         };
     };

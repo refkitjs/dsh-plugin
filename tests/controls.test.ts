@@ -14,6 +14,10 @@ describe('CONTROLS_PARAMETER mirrors core SearchControls', () => {
     const shape = Object.keys(schema.shape).sort()
     expect(Object.keys(CONTROLS_PARAMETER.properties ?? {}).sort()).toEqual(shape)
   })
+  it('never says "provider" in its model-facing text (dsh uses the word for LLM providers)', () => {
+    expect(JSON.stringify(CONTROLS_PARAMETER)).not.toMatch(/provider/i)
+    expect(CONTROLS_PARAMETER.description).toMatch(/^Source-neutral search controls/)
+  })
   it('compiles to a JSON schema within the dsh enforced subset', () => {
     expect(() => assertSupportedJsonSchema(valueSchemaSpecToJsonSchema(CONTROLS_PARAMETER))).not.toThrow()
   })

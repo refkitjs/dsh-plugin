@@ -108,6 +108,11 @@ const _outcomeCheckA: InferredOutcome = {} as SearchOutcome
 const _outcomeCheckB: SearchOutcome = {} as InferredOutcome
 void _outcomeCheckA
 void _outcomeCheckB
+// Assignability tolerates an optional key on one side only; the tile's key sets must match exactly.
+type InferredTile = InferredOutcome['references'][number]
+type SameKeys<A, B> = [Exclude<keyof A, keyof B> | Exclude<keyof B, keyof A>] extends [never] ? true : false
+const _tileKeys: SameKeys<RefTile, InferredTile> = true
+void _tileKeys
 
 const SOURCE_LIST = PROVIDER_REGISTRY
   .map(e => `${e.id} (${e.modalities.join('/')}${e.key ? ', needs key' : ''})`)

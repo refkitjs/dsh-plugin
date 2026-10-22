@@ -115,7 +115,9 @@ const tileOf = (id: string, modality: string, extra: Record<string, unknown> = {
 describe('RefkitCard media by modality', () => {
   it('video: draws the poster under a ▶ overlay, never the mp4 preview, with an m:ss duration badge', () => {
     const markup = cardOf([tileOf('v1', 'video', { thumbnail: 'https://x.example/poster.jpg', preview: 'https://x.example/clip.mp4', durationSec: 12, width: 640, height: 360 })])
-    expect(markup).toMatch(/<img [^>]*src="https:\/\/x\.example\/poster\.jpg"/)
+    // The poster is an absolutely positioned cover under the play mark, and decorative (the title shows below).
+    expect(markup).toMatch(/<img class="rk-cover" [^>]*src="https:\/\/x\.example\/poster\.jpg"[^>]*\/><span class="rk-play"/)
+    expect(markup).toMatch(/<img class="rk-cover" [^>]*alt=""/)
     expect(markup).not.toContain('clip.mp4')
     expect(markup).toMatch(/class="rk-play"[^>]*>▶</)
     expect(markup).toMatch(/class="rk-duration"[^>]*>0:12</)
@@ -132,8 +134,9 @@ describe('RefkitCard media by modality', () => {
 
   it('audio: draws its album art over the ♪ fallback, never the audio file, with an m:ss duration badge', () => {
     const markup = cardOf([tileOf('a1', 'audio', { thumbnail: 'https://x.example/art.jpg', preview: 'https://x.example/song.mp3', durationSec: 65.4 })])
-    expect(markup).toMatch(/<img [^>]*src="https:\/\/x\.example\/art\.jpg"/)
-    expect(markup).toMatch(/class="rk-media-glyph"[^>]*>♪</)
+    // The art is an absolutely positioned cover after the in-flow ♪, so it paints over it and the ♪ shows through when it fails.
+    expect(markup).toMatch(/<div class="rk-media-glyph"[^>]*>♪<\/div><img class="rk-cover" [^>]*src="https:\/\/x\.example\/art\.jpg"/)
+    expect(markup).toMatch(/<img class="rk-cover" [^>]*alt=""/)
     expect(markup).not.toContain('song.mp3')
     expect(markup).toMatch(/class="rk-duration"[^>]*>1:05</)
   })

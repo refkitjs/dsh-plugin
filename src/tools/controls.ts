@@ -11,7 +11,7 @@ import type { ObjectValueSchemaSpec } from '@deepseek-ai/dsh-tools'
 export const CONTROLS_PARAMETER = {
   type: 'object',
   additionalProperties: false,
-  description: 'Provider-neutral search controls; each source applies the ones it supports and the rest are reported as ignored.',
+  description: 'Source-neutral search controls; each source applies the ones it supports and the rest are reported as ignored.',
   properties: {
     orientation: { type: 'string', enum: ['landscape', 'portrait', 'square'] },
     color: { type: 'string', description: 'dominant colour name or hex' },
@@ -48,7 +48,7 @@ export const CONTROLS_PARAMETER = {
       additionalProperties: false,
       properties: { copyright: { type: 'string', enum: ['public-domain', 'copyrighted', 'any'] } },
     },
-    page: { type: 'integer', description: 'provider-local page (1-based)' },
+    page: { type: 'integer', description: 'source-local page (1-based)' },
   },
 } as const satisfies ObjectValueSchemaSpec
 
