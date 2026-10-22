@@ -23,7 +23,7 @@ export const inject = ['tools']
 
 export { Config, readConfig } from './config.ts'
 export type { Config as RefkitPluginConfig, ConfigValues, ResolvedConfig } from './config.ts'
-export { PROVIDER_IDS, KEYLESS_IDS, PROVIDER_REGISTRY, resolveConfig, buildClient, PLUGIN_VERSION } from './config.ts'
+export { SOURCE_IDS, RETIRED_SOURCE_IDS, KEYLESS_IDS, PROVIDER_REGISTRY, resolveConfig, buildClient, PLUGIN_VERSION } from './config.ts'
 export { createSearchTool, runSearch, SEARCH_TOOL_NAME } from './tools/search.ts'
 export type { SearchArgs, SearchDeps } from './tools/search.ts'
 export { createRightsTool, runRights, RIGHTS_TOOL_NAME } from './tools/rights.ts'

@@ -19,7 +19,7 @@ import { COPY } from './copy.ts'
 /** The Host settings namespace: the plugin's row id in `cordis.patch.yml`. */
 export const SETTINGS_NS = 'refkit'
 
-/** Secret field → the providers it enables. Key order is the page's display order. */
+/** Secret field → the sources it enables. Key order is the page's display order. */
 export const KEY_LABELS: Readonly<Record<string, string>> = {
   unsplashAccessKey: 'Unsplash (images)',
   pexelsApiKey: 'Pexels (images, video)',
@@ -50,15 +50,15 @@ export const KEY_ENV_HINT: Readonly<Record<string, readonly string[]>> = {
   openverseToken: ['REFKIT_OPENVERSE_TOKEN'],
 }
 
-/** Every provider id `sources` accepts (mirrors `PROVIDER_IDS`). */
+/** Every live source id `sources` accepts (mirrors the host's `SOURCE_IDS` in src/config.ts). */
 export const SOURCE_IDS: readonly string[] = [
   'artic', 'brave', 'europeana', 'flickr', 'freesound', 'gutendex', 'internet-archive', 'jamendo',
   'met', 'nailbook', 'openverse', 'openverse-audio', 'pexels', 'pexels-video', 'pixabay', 'pixabay-video',
-  'poetrydb', 'polyhaven', 'ambientcg', 'rijksmuseum', 'smithsonian', 'unsplash', 'wikimedia-commons',
+  'poetrydb', 'polyhaven', 'polyhaven-hdri', 'ambientcg', 'rijksmuseum', 'smithsonian', 'unsplash', 'wikimedia-commons',
 ]
 
 /**
- * Ids that once shipped and were since removed (mirrors `RETIRED_IDS`). `sources` still accepts
+ * Ids that once shipped and were since removed (mirrors the host's `RETIRED_SOURCE_IDS`). `sources` still accepts
  * them, so a stored one never blocks saving the page, but the page does not list them.
  */
 export const RETIRED_SOURCE_IDS: readonly string[] = []
@@ -101,7 +101,7 @@ export function settingsBooleanField(field: string): SettingsFieldSpec {
 }
 
 /**
- * A provider-id list staged as comma-separated text. Ids are matched
+ * A source-id list staged as comma-separated text. Ids are matched
  * case-insensitively and deduplicated in order; an unknown id makes the draft
  * invalid, which blocks the save. A blank draft clears the field (every
  * enabled source).

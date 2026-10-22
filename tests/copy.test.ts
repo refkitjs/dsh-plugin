@@ -16,4 +16,12 @@ describe('COPY', () => {
   it('labels the intent', () => {
     expect(COPY.intent('commercial-product')).toBe('intent: commercial-product')
   })
+
+  it('never says "provider" on the settings page (dsh uses the word for LLM providers)', () => {
+    for (const [key, value] of Object.entries(COPY.settings)) {
+      if (typeof value === 'string') expect(value, key).not.toMatch(/provider/i)
+    }
+    expect(COPY.settings.sourcesHint).toMatch(/source ids/)
+    expect(COPY.settings.limitHint).toContain('polyhaven and polyhaven-hdri')
+  })
 })

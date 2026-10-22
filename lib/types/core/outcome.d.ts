@@ -24,7 +24,8 @@ export interface VerdictSummary {
 export interface RefTile {
     id: string;
     modality: Modality;
-    provider: string;
+    /** The source id (e.g. `openverse-audio`); 0.2.0 tiles named it `provider`. */
+    source: string;
     canonicalUrl: string;
     license: string;
     title?: string;
@@ -33,8 +34,11 @@ export interface RefTile {
     author?: string;
     thumbnail?: string;
     preview?: string;
+    /** The original's dimensions when known, else the preview rendition's (the aspect ratio is the same). */
     width?: number;
     height?: number;
+    /** Audio and video length in seconds (a float). */
+    durationSec?: number;
     description?: string;
     excerpt?: string;
     tags?: string[];
@@ -65,9 +69,17 @@ export interface SearchOutcome {
 export type CardOutcome = Omit<SearchOutcome, 'meta'>;
 /** Shallow copy of `obj` without its undefined-valued own properties (dsh snapshots values as lossless JSON). */
 export declare function defined<T extends object>(obj: T): T;
+/**
+ * A duration as `m:ss`, or `h:mm:ss` from an hour on, rounded to the nearest second; a
+ * sub-second clip reads `0:01`, never `0:00`. Undefined for a missing, non-finite or non-positive value.
+ */
+export declare function formatDuration(sec: number | undefined): string | undefined;
 /** Cut `text` to `max` code points, appending an ellipsis when anything was removed. */
 export declare function trunc(text: string, max: number): string;
-/** Soft-narrow one tile; null for anything unusable. Unknown keys are dropped. */
+/**
+ * Soft-narrow one tile; null for anything unusable. Unknown keys are dropped. A tile persisted by
+ * 0.2.0 names its source `provider`; it is read as `source` so old conversations still render.
+ */
 export declare function narrowTile(value: unknown): RefTile | null;
 /** Soft-parse a canonical value or presentation metadata; null for the wrong shape. */
 export declare function narrowOutcome(value: unknown): SearchOutcome | null;

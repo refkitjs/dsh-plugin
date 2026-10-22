@@ -58,6 +58,7 @@ function expectGrid(markup: string): void {
   expect(markup).toContain('<span class="rk-head-title">2 references for “tidal pool”</span>')
   const tiles = markup.split('class="rk-tile"').slice(1)
   expect(tiles).toHaveLength(2)
+  expect(tiles[0]).toMatch(/class="rk-chip"[^>]*>museum</)
   expect(tiles[0]).toMatch(/class="rk-chip"[^>]*>CC-BY 4\.0</)
   expect(tiles[0]).toContain('https://museum.example/1/t.jpg')
   expect(tiles[1]).toMatch(/class="rk-chip"[^>]*>CC0-1\.0</)
@@ -99,5 +100,65 @@ describe('RefkitCard phase dispatch', () => {
   it('result that is not a search outcome: falls back to its plain text', () => {
     const markup = render(result({ content: [{ type: 'text', text: 'search finished without card metadata' }], isError: false, meta: { version: 'drifted' } }))
     expect(markup).toBe('<div class="rk-plain">search finished without card metadata</div>')
+  })
+})
+
+/** A card for these raw tiles, as the presentation metadata carries them. */
+function cardOf(references: Record<string, unknown>[]): string {
+  const meta = { query: 'q', modalities: ['image', 'video', 'audio'], count: references.length, references, sources: [], warnings: [] }
+  return render(result({ content: [], isError: false, meta }))
+}
+
+const tileOf = (id: string, modality: string, extra: Record<string, unknown> = {}): Record<string, unknown> =>
+  ({ id, modality, source: 'src', canonicalUrl: `https://x.example/${id}`, license: 'CC0-1.0', title: id, ...extra })
+
+describe('RefkitCard media by modality', () => {
+  it('video: draws the poster under a ▶ overlay, never the mp4 preview, with an m:ss duration badge', () => {
+    const markup = cardOf([tileOf('v1', 'video', { thumbnail: 'https://x.example/poster.jpg', preview: 'https://x.example/clip.mp4', durationSec: 12, width: 640, height: 360 })])
+    expect(markup).toMatch(/<img [^>]*src="https:\/\/x\.example\/poster\.jpg"/)
+    expect(markup).not.toContain('clip.mp4')
+    expect(markup).toMatch(/class="rk-play"[^>]*>▶</)
+    expect(markup).toMatch(/class="rk-duration"[^>]*>0:12</)
+    expect(markup).toContain('aspect-ratio:640 / 360')
+  })
+
+  it('video without a poster: the ▶ glyph and no image, still never the mp4', () => {
+    const markup = cardOf([tileOf('v2', 'video', { preview: 'https://x.example/clip.mp4', durationSec: 75 })])
+    expect(markup).not.toContain('<img')
+    expect(markup).not.toContain('clip.mp4')
+    expect(markup).toMatch(/class="rk-media-glyph"[^>]*>▶</)
+    expect(markup).toMatch(/class="rk-duration"[^>]*>1:15</)
+  })
+
+  it('audio: draws its album art over the ♪ fallback, never the audio file, with an m:ss duration badge', () => {
+    const markup = cardOf([tileOf('a1', 'audio', { thumbnail: 'https://x.example/art.jpg', preview: 'https://x.example/song.mp3', durationSec: 65.4 })])
+    expect(markup).toMatch(/<img [^>]*src="https:\/\/x\.example\/art\.jpg"/)
+    expect(markup).toMatch(/class="rk-media-glyph"[^>]*>♪</)
+    expect(markup).not.toContain('song.mp3')
+    expect(markup).toMatch(/class="rk-duration"[^>]*>1:05</)
+  })
+
+  it('audio without art or duration: the ♪ glyph only', () => {
+    const markup = cardOf([tileOf('a2', 'audio', { preview: 'https://x.example/song.mp3' })])
+    expect(markup).not.toContain('<img')
+    expect(markup).toMatch(/class="rk-media-glyph"[^>]*>♪</)
+    expect(markup).not.toContain('rk-duration')
+  })
+
+  it('image: no duration badge and no play overlay', () => {
+    const markup = cardOf([tileOf('i1', 'image', { thumbnail: 'https://x.example/i.jpg', durationSec: 9 })])
+    expect(markup).toMatch(/<img [^>]*src="https:\/\/x\.example\/i\.jpg"/)
+    expect(markup).not.toContain('rk-duration')
+    expect(markup).not.toContain('rk-play')
+  })
+
+  it('a card persisted by 0.2.0, whose tiles name their source `provider`, still renders with its source chip', () => {
+    const { source: _source, ...legacy } = tileOf('o1', 'image', { thumbnail: 'https://x.example/o.jpg', license: 'CC-BY', licenseVersion: '4.0' })
+    const markup = cardOf([{ ...legacy, provider: 'openverse' }])
+    const tiles = markup.split('class="rk-tile"').slice(1)
+    expect(tiles).toHaveLength(1)
+    expect(tiles[0]).toMatch(/class="rk-chip"[^>]*>openverse</)
+    expect(tiles[0]).toMatch(/class="rk-chip"[^>]*>CC-BY 4\.0</)
+    expect(tiles[0]).toContain('https://x.example/o.jpg')
   })
 })

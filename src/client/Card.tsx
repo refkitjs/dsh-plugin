@@ -1,17 +1,18 @@
 /**
  * Keyed tool.call.toolview entry for refkit_search. Parses the settled block's
  * presentation metadata into a SearchOutcome and renders a thumbnail grid:
- * license chip on every tile, a coloured use-verdict badge when the call
- * carried an intent, and a one-click credit copy. Every failure path degrades
- * to plain text — the chat row never breaks.
+ * source and license chips on every tile, a video's poster under a play mark,
+ * an audio track's album art, an `m:ss` badge on audio and video, a coloured
+ * use-verdict badge when the call carried an intent, and a one-click credit
+ * copy. Every failure path degrades to plain text — the chat row never breaks.
  * @module @refkit/dsh-plugin/client/Card
  */
 
-import { useState, type ReactNode } from 'react'
+import { useState, type ReactNode, type SyntheticEvent } from 'react'
 import type { ToolCallBlock } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { ToolCallOwnerProps } from '@deepseek-ai/dsh-client-ui-tool/client'
 import { narrowOutcome, type RefTile, type SearchOutcome } from '../core/outcome.ts'
-import { aspectRatio, licenseLabel, summarizeSources, verdictBadge } from './badges.ts'
+import { aspectRatio, formatDuration, licenseLabel, summarizeSources, verdictBadge } from './badges.ts'
 import { COPY } from './copy.ts'
 import { ensureStyle } from './styles.ts'
 
@@ -55,25 +56,48 @@ function CreditButton({ text }: { text: string }): ReactNode {
   return <button type="button" className="rk-btn" onClick={copy}>{state === 'copied' ? COPY.copied : COPY.copyCredit}</button>
 }
 
-function Tile({ tile }: { tile: RefTile }): ReactNode {
-  const image = tile.thumbnail ?? tile.preview
-  const badge = tile.useVerdict ? verdictBadge(tile.useVerdict.decision) : null
-  let media: ReactNode
-  if (tile.modality === 'image' && image) {
-    // A hot-link-blocked thumbnail hides itself; the sized rk-media box and the title row remain.
-    media = <img src={image} alt={tile.title ?? ''} loading="lazy" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} />
-  } else if (tile.modality === 'text') {
-    media = <div className="rk-media-text">{tile.excerpt ?? tile.description ?? tile.title ?? COPY.untitled}</div>
-  } else {
-    media = <div className="rk-media-glyph" aria-label={tile.modality}>{tile.modality === 'audio' ? '♪' : tile.modality === 'video' ? '▶' : '▦'}</div>
+/** A hot-link-blocked image hides itself; the sized rk-media box, and any glyph or play mark under it, remain. */
+function hideOnError(e: SyntheticEvent<HTMLImageElement>): void {
+  e.currentTarget.style.display = 'none'
+}
+
+function Cover({ src, alt }: { src: string; alt: string }): ReactNode {
+  return <img className="rk-cover" src={src} alt={alt} loading="lazy" referrerPolicy="no-referrer" onError={hideOnError} />
+}
+
+function Media({ tile }: { tile: RefTile }): ReactNode {
+  const alt = tile.title ?? ''
+  switch (tile.modality) {
+    case 'image': {
+      const image = tile.thumbnail ?? tile.preview
+      return image
+        ? <img src={image} alt={alt} loading="lazy" referrerPolicy="no-referrer" onError={hideOnError} />
+        : <div className="rk-media-glyph" aria-label="image">▦</div>
+    }
+    case 'text':
+      return <div className="rk-media-text">{tile.excerpt ?? tile.description ?? tile.title ?? COPY.untitled}</div>
+    case 'video':
+      // The poster only: a video's `preview` is the video file itself.
+      return tile.thumbnail
+        ? <><Cover src={tile.thumbnail} alt={alt} /><span className="rk-play" aria-hidden="true">▶</span></>
+        : <div className="rk-media-glyph" aria-label="video">▶</div>
+    case 'audio':
+      // Album art covers the ♪, which shows through when there is none or it fails to load.
+      return <><div className="rk-media-glyph" aria-label="audio">♪</div>{tile.thumbnail && <Cover src={tile.thumbnail} alt={alt} />}</>
   }
+}
+
+function Tile({ tile }: { tile: RefTile }): ReactNode {
+  const badge = tile.useVerdict ? verdictBadge(tile.useVerdict.decision) : null
+  const duration = tile.modality === 'audio' || tile.modality === 'video' ? formatDuration(tile.durationSec) : undefined
   return (
     <div className="rk-tile">
       <div className="rk-media" style={{ aspectRatio: aspectRatio(tile) }}>
-        {media}
+        <Media tile={tile} />
         {badge && <span className={badge.className} title={tile.useVerdict?.reason}>{badge.label}</span>}
+        {duration && <span className="rk-duration">{duration}</span>}
         <div className="rk-chips">
-          <span className="rk-chip" title={tile.provider}>{tile.provider}</span>
+          <span className="rk-chip" title={tile.source}>{tile.source}</span>
           <span className="rk-chip" title={tile.license}>{licenseLabel(tile)}</span>
         </div>
       </div>

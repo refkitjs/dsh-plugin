@@ -7,7 +7,7 @@
  */
 
 import { defineTool, type GenericCallView, type GenericResultView, type InferArgs, type InferValue, type ParameterSchemaSpec, type ToolDefinition, type ValueSchemaSpec } from '@deepseek-ai/dsh-tools'
-import { INTENTS, type Attribution, type Intent, type ProviderError, type ProviderSearchStatus, type Reference, type RefkitClient, type SearchInput, type Verdict } from '@refkit/core'
+import { INTENTS, isSourceSelectionError, type Attribution, type Intent, type Reference, type RefkitClient, type SearchInput, type SourceError, type SourceStatus as CoreSourceStatus, type Verdict } from '@refkit/core'
 import { MAX_DEADLINE_MS, PROVIDER_REGISTRY, type ResolvedConfig } from '../config.ts'
 import { DECISIONS, MODALITIES, SOURCE_STATUSES, defined, narrowOutcome, trunc, type Json, type RefTile, type SearchOutcome, type SourceStatus } from '../core/outcome.ts'
 import { cardMeta, renderSearch } from '../render.ts'
@@ -28,7 +28,7 @@ export const SEARCH_PARAMETERS = {
   modalities: { type: 'array', items: { type: 'string', enum: MODALITIES }, description: 'Default ["image"]. text = passages/poems/books; audio = sounds/music; video = clips.' },
   intent: { type: 'string', enum: INTENTS, description: 'Annotate every result with a use-verdict (allowed / allowed-with-attribution / denied / needs-review) and a credit line for this intended use. No filtering.' },
   gateFor: { type: 'string', enum: INTENTS, description: 'Return only results whose license allows this intended use (also annotates). Prefer over intent when the user needs usable material only.' },
-  sources: { type: 'array', items: { type: 'string' }, description: 'Restrict to provider ids (see the tool description). Omit to search every enabled source.' },
+  sources: { type: 'array', items: { type: 'string' }, description: 'Restrict to source ids (see the tool description). Omit to search every enabled source.' },
   limit: { type: 'integer', description: 'Results to return, 1..30. Default from configuration.' },
   cursor: { type: 'string', description: 'Opaque continuation from a previous result\'s nextCursor.' },
   controls: CONTROLS_PARAMETER,
@@ -44,7 +44,7 @@ const tileSchema = {
   properties: {
     id: { type: 'string', required: true },
     modality: { type: 'string', enum: MODALITIES, required: true },
-    provider: { type: 'string', required: true },
+    source: { type: 'string', required: true },
     canonicalUrl: { type: 'string', required: true },
     license: { type: 'string', required: true },
     title: { type: 'string' },
@@ -55,6 +55,7 @@ const tileSchema = {
     preview: { type: 'string' },
     width: { type: 'number' },
     height: { type: 'number' },
+    durationSec: { type: 'number' },
     description: { type: 'string' },
     excerpt: { type: 'string' },
     tags: { type: 'array', items: { type: 'string' } },
@@ -113,7 +114,7 @@ const SOURCE_LIST = PROVIDER_REGISTRY
   .join(', ')
 
 const DESCRIPTION =
-  'Search license-normalized creative references (images, video, audio, text passages) across up to 23 sources and return them ranked, deduplicated, and each tagged with its license and canonical source link. '
+  'Search license-normalized creative references (images, video, audio, text passages) across up to 24 sources and return them ranked, deduplicated, and each tagged with its license and canonical source link. '
   + 'Use for reference pictures, moodboards, textures/HDRIs, public-domain artworks, sound effects, music, poems and book passages — not for web pages. '
   + 'Pass `intent` when the user has said how the material will be used so every result carries a use-verdict and a ready credit line; pass `gateFor` to return only usable results. '
   + 'Results are references, not rights clearance. '
@@ -124,12 +125,16 @@ function message(err: unknown): string {
   return trunc(raw, ERROR_CHARS)
 }
 
-/** Project one core Reference (plus optional assessment) onto a tile with no undefined keys. */
+/**
+ * Project one core Reference (plus optional assessment) onto a tile with no undefined keys. Width and
+ * height fall back to the preview rendition when the original's size (`visual`) is unknown, as for
+ * flickr and pixabay-video; the duration comes from the audio or video variant.
+ */
 export function toTile(ref: Reference, assessment?: { verdict: Verdict; attribution: Attribution }): RefTile {
   const tile = defined({
     id: ref.id,
     modality: ref.modality,
-    provider: ref.source.providerId,
+    source: ref.source.id,
     canonicalUrl: ref.canonicalUrl,
     license: ref.rights.license,
     title: ref.title,
@@ -138,8 +143,9 @@ export function toTile(ref: Reference, assessment?: { verdict: Verdict; attribut
     author: ref.rights.author,
     thumbnail: ref.thumbnail?.url,
     preview: ref.preview?.url,
-    width: ref.visual?.width,
-    height: ref.visual?.height,
+    width: ref.visual?.width ?? ref.preview?.width,
+    height: ref.visual?.height ?? ref.preview?.height,
+    durationSec: ref.audio?.durationSec ?? ref.video?.durationSec,
     description: ref.description,
     excerpt: ref.text?.excerpt,
     tags: ref.tags && ref.tags.length > 0 ? ref.tags : undefined,
@@ -153,17 +159,17 @@ export function toTile(ref: Reference, assessment?: { verdict: Verdict; attribut
   return tile
 }
 
-/** Compact projection of core's per-provider status. */
-export function toSourceStatus(status: ProviderSearchStatus): SourceStatus {
+/** Compact projection of core's per-source status. */
+export function toSourceStatus(status: CoreSourceStatus): SourceStatus {
   return defined({
-    id: status.providerId,
+    id: status.sourceId,
     status: status.status,
     reason: status.reason,
     returned: status.returned,
   }) as SourceStatus
 }
 
-/** Why a known provider the call asked for is not enabled; undefined for unknown or enabled ids. */
+/** Why a known source the call asked for is not enabled; undefined for unknown or enabled ids. */
 function disabledHint(id: string, enabled: readonly string[], cfg: ResolvedConfig): string | undefined {
   const entry = PROVIDER_REGISTRY.find(e => e.id === id)
   if (entry === undefined || enabled.includes(id)) return undefined
@@ -188,10 +194,11 @@ export async function runSearch(args: SearchArgs, deps: SearchDeps, signal?: Abo
   const limit = Math.min(MAX_LIMIT, Math.max(1, Math.floor(args.limit ?? cfg.limit)))
   const intent: Intent | undefined = args.intent ?? args.gateFor
 
-  // Core's AggregateError carries raw errors without provider ids; the
-  // onProviderError callback is the only place the id and the error meet.
-  // It also fires for per-item schema rejects, which precede a run's own
-  // failure, so the last error per provider is the one that failed it.
+  // Core's AggregateError carries raw errors without source ids; the
+  // onSourceError callback is the only place the id and the error meet.
+  // It also fires for per-item rejects (a schema failure, or a modality the
+  // search did not ask for), which precede a run's own failure, so the last
+  // error per source is the one that failed it.
   const failures = new Map<string, unknown>()
   const input: SearchInput = defined({
     query,
@@ -205,7 +212,7 @@ export async function runSearch(args: SearchArgs, deps: SearchDeps, signal?: Abo
     minRelevance: args.minRelevance,
     gateFor: args.gateFor,
     signal,
-    onProviderError: (e: ProviderError) => { failures.set(e.providerId, e.error) },
+    onSourceError: (e: SourceError) => { failures.set(e.sourceId, e.error) },
   })
 
   let result
@@ -214,13 +221,15 @@ export async function runSearch(args: SearchArgs, deps: SearchDeps, signal?: Abo
   } catch (err) {
     if (err instanceof AggregateError) {
       const parts = failures.size > 0
-        ? [...failures].map(([providerId, error]) => `${providerId}: ${message(error)}`)
+        ? [...failures].map(([sourceId, error]) => `${sourceId}: ${message(error)}`)
         : err.errors.map((e: unknown, i: number) => `#${i + 1}: ${message(e)}`)
       throw new Error(`all ${err.errors.length} sources failed: ${parts.join('; ')}`)
     }
-    // Only core's selection miss gets the enabled-ids hint; an invalid cursor or
-    // an abort reason is rethrown as-is so its name and message survive.
-    if (sources && err instanceof Error && err.message.includes('no configured provider matches')) {
+    // Only core's source-scoped selection miss gets the enabled-ids hint; an
+    // invalid cursor, an abort reason or an unscoped miss is rethrown as-is so its
+    // name and message survive. The guard is structural, so a client built with
+    // another copy of core is recognised too.
+    if (sources && isSourceSelectionError(err) && err.code === 'no-matching-source') {
       throw sourcesError(err, sources, client.providers.map(p => p.id), cfg)
     }
     throw err
@@ -236,12 +245,12 @@ export async function runSearch(args: SearchArgs, deps: SearchDeps, signal?: Abo
     modalities,
     count: references.length,
     references,
-    sources: result.meta.providers.map(toSourceStatus),
+    sources: result.meta.sources.map(toSourceStatus),
     // Core only counts failed sources in its warnings; name each one here.
     warnings: [
-      ...result.meta.providers
-        .filter(p => p.status === 'failed')
-        .map(p => trunc(`${p.providerId}: ${message(p.error ?? 'unknown error')}`, WARNING_CHARS)),
+      ...result.meta.sources
+        .filter(s => s.status === 'failed')
+        .map(s => trunc(`${s.sourceId}: ${message(s.error ?? 'unknown error')}`, WARNING_CHARS)),
       ...result.meta.warnings.map(w => trunc(w, WARNING_CHARS)),
     ],
   }

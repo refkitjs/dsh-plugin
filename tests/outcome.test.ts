@@ -4,7 +4,7 @@ import { narrowOutcome, narrowTile, trunc, type SearchOutcome } from '../src/cor
 const tile = {
   id: 'openverse:abc',
   modality: 'image',
-  provider: 'openverse',
+  source: 'openverse',
   canonicalUrl: 'https://openverse.org/image/abc',
   license: 'CC-BY',
   title: 'Neon alley',
@@ -34,6 +34,24 @@ describe('narrowTile', () => {
     expect(narrowTile({ ...tile, canonicalUrl: undefined })).toBeNull()
     expect(narrowTile({ ...tile, canonicalUrl: 'javascript:alert(1)' })).toBeNull()
     expect(narrowTile({ ...tile, modality: 'hologram' })).toBeNull()
+  })
+  it('narrows a tile persisted by 0.2.0, which names its source `provider`', () => {
+    const { source, ...rest } = tile
+    expect(narrowTile({ ...rest, provider: source })).toEqual(tile)
+  })
+  it('prefers `source` when a tile carries both keys, and rejects one with neither', () => {
+    expect(narrowTile({ ...tile, provider: 'stale' })).toEqual(tile)
+    const { source: _source, ...sourceless } = tile
+    expect(narrowTile(sourceless)).toBeNull()
+    expect(narrowTile({ ...sourceless, provider: '' })).toBeNull()
+  })
+  it('keeps a positive finite durationSec and drops anything else', () => {
+    expect(narrowTile({ ...tile, durationSec: 65.4 })?.durationSec).toBe(65.4)
+    for (const bad of [0, -3, Number.NaN, Number.POSITIVE_INFINITY, '65', null]) {
+      const parsed = narrowTile({ ...tile, durationSec: bad })
+      expect(parsed, String(bad)).not.toBeNull()
+      expect(parsed, String(bad)).not.toHaveProperty('durationSec')
+    }
   })
   it('drops a malformed useVerdict instead of failing the tile', () => {
     const parsed = narrowTile({ ...tile, useVerdict: { decision: 'maybe' } })

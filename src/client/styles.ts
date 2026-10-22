@@ -19,6 +19,9 @@ export const CSS = `
 .rk-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .rk-media-text { padding: 10px; font-size: 12px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-wrap; }
 .rk-media-glyph { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 28px; color: var(--dsw-alias-label-tertiary, #8c959f); }
+.rk-media img.rk-cover { position: absolute; inset: 0; }
+.rk-play { position: absolute; top: 50%; left: 50%; width: 34px; height: 34px; margin: -17px 0 0 -17px; padding-left: 3px; box-sizing: border-box; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; background: rgba(0,0,0,.55); pointer-events: none; }
+.rk-duration { position: absolute; top: 6px; right: 6px; padding: 1px 6px; border-radius: 4px; font-size: 10.5px; font-weight: 600; line-height: 16px; color: #fff; background: rgba(0,0,0,.62); font-variant-numeric: tabular-nums; }
 .rk-badge { position: absolute; top: 6px; left: 6px; padding: 1px 7px; border-radius: 999px; font-size: 10.5px; font-weight: 600; line-height: 16px; color: #fff; }
 .rk-badge-allowed { background: #1a7f37; }
 .rk-badge-attribution { background: #0969da; }

@@ -2,7 +2,7 @@
  * Plugin configuration: the schemastery schema (every field volatile, so the
  * Host projects it as the `refkit` settings namespace and commits edits into
  * live references), environment fallbacks shared with @refkit/mcp's CLI, the
- * static registry of the 23 provider factories, and the RefkitClient factory.
+ * static registry of the provider factories behind the 24 sources, and the RefkitClient factory.
  * Secrets are read here and nowhere else.
  * @module @refkit/dsh-plugin/config
  */
@@ -78,7 +78,7 @@ export interface ConfigValues {
   jamendoClientId?: string
   europeanaApiKey?: string
   openverseToken?: string
-  /** Provider ids to enable; empty = every source whose key is present. */
+  /** Source ids to enable; empty = every source whose key is present. */
   sources?: readonly string[]
   limit?: number
   poolFactor?: number
@@ -137,7 +137,7 @@ export function resolveConfig(config: ConfigValues, env: NodeJS.ProcessEnv = pro
   }
 }
 
-/** One provider factory the plugin can mount. */
+/** One provider factory the plugin can mount; `id` is the id of the source it serves. */
 export interface ProviderEntry {
   id: string
   modalities: Modality[]
@@ -167,6 +167,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   { id: 'pixabay-video', modalities: ['video'], key: 'pixabayKey', make: cfg => pixabayVideo({ key: k(cfg, 'pixabayKey') }) },
   { id: 'poetrydb', modalities: ['text'], make: () => poetrydb() },
   { id: 'polyhaven', modalities: ['image'], make: cfg => polyhaven({ maxAssets: cfg.limit }) },
+  { id: 'polyhaven-hdri', modalities: ['image'], make: cfg => polyhaven({ assetType: 'hdris', maxAssets: cfg.limit }) },
   { id: 'ambientcg', modalities: ['image'], make: cfg => ambientcg({ limit: cfg.limit }) },
   { id: 'rijksmuseum', modalities: ['image'], make: cfg => rijksmuseum({ maxObjects: cfg.limit }) },
   { id: 'smithsonian', modalities: ['image'], key: 'smithsonianApiKey', make: cfg => smithsonian({ apiKey: k(cfg, 'smithsonianApiKey') }) },
@@ -174,23 +175,24 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   { id: 'wikimedia-commons', modalities: ['image'], make: () => wikimediaCommons({ thumbWidth: 500 }) },
 ]
 
-export const PROVIDER_IDS: readonly string[] = PROVIDER_REGISTRY.map(e => e.id)
+/** Every live source id, in registry order (what `sources` speaks and results report). */
+export const SOURCE_IDS: readonly string[] = PROVIDER_REGISTRY.map(e => e.id)
 export const KEYLESS_IDS: readonly string[] = PROVIDER_REGISTRY.filter(e => e.key === undefined).map(e => e.id)
 
 /**
- * Provider ids that once shipped and have since been removed from PROVIDER_REGISTRY.
+ * Source ids that once shipped and have since been removed from PROVIDER_REGISTRY.
  *
  * The rule: an id that has ever been released stays valid in `sources` forever. A user may have
  * whitelisted it in `cordis.patch.yml`, and a stored config that no longer validates fails the
- * plugin at startup. So when a provider is removed, move its id here instead of just deleting it.
+ * plugin at startup. So when a source is removed, move its id here instead of just deleting it.
  * A retired id is accepted by `sources` and is a no-op: `enabledProviders` filters by registry
- * entries, so it enables nothing. Mirror every change in RETIRED_SOURCE_IDS
- * (src/client/settings-model.ts): tests/config.test.ts (SHIPPED_IDS) fails until RETIRED_IDS has
- * it, and tests/settings-model.test.ts until RETIRED_SOURCE_IDS mirrors it.
+ * entries, so it enables nothing. Mirror every change in the client's RETIRED_SOURCE_IDS
+ * (src/client/settings-model.ts): tests/config.test.ts (SHIPPED_IDS) fails until this list has
+ * it, and tests/settings-model.test.ts until the client mirror has it.
  */
-export const RETIRED_IDS: readonly string[] = []
+export const RETIRED_SOURCE_IDS: readonly string[] = []
 
-/** The ids `sources` accepts: every live provider id plus every retired one. */
+/** The ids `sources` accepts: every live source id plus every retired one. */
 export function sourceIdUnion(current: readonly string[], retired: readonly string[]) {
   return z.union([...current, ...retired])
 }
@@ -201,7 +203,7 @@ const secret = (text: string) => z.string().role('secret').description(text).vol
  * Schemastery schema. Every field is volatile: a settings edit commits into the
  * same references and emits `loader/volatile-update` instead of remounting the
  * plugin. An unknown `sources` id fails validation, so the Host refuses the write; a retired
- * one (RETIRED_IDS) still validates, so a stored whitelist survives a provider's removal.
+ * one (RETIRED_SOURCE_IDS) still validates, so a stored whitelist survives a source's removal.
  */
 export const Config = z.object({
   unsplashAccessKey: secret('Unsplash access key (free at unsplash.com/developers). Empty disables unsplash. Env: REFKIT_UNSPLASH_KEY / UNSPLASH_KEY.'),
@@ -214,14 +216,14 @@ export const Config = z.object({
   jamendoClientId: secret('Jamendo client id. Env: REFKIT_JAMENDO_CLIENT_ID / JAMENDO_CLIENT_ID.'),
   europeanaApiKey: secret('Europeana API key (free). Env: REFKIT_EUROPEANA_KEY / EUROPEANA_KEY.'),
   openverseToken: secret('Optional Openverse OAuth2 token; anonymous works with lower rate limits. Env: REFKIT_OPENVERSE_TOKEN.'),
-  sources: z.array(sourceIdUnion(PROVIDER_IDS, RETIRED_IDS)).default([]).description('Provider ids to enable (empty = every source whose key is present).').volatile(),
-  limit: z.number().step(1).min(1).max(30).default(DEFAULTS.limit).description('Default results per call; also caps per-item detail fetches for met, rijksmuseum and polyhaven.').volatile(),
+  sources: z.array(sourceIdUnion(SOURCE_IDS, RETIRED_SOURCE_IDS)).default([]).description('Source ids to enable (empty = every source whose key is present).').volatile(),
+  limit: z.number().step(1).min(1).max(30).default(DEFAULTS.limit).description('Default results per call; also caps per-item detail fetches for met, rijksmuseum, polyhaven and polyhaven-hdri.').volatile(),
   poolFactor: z.number().step(1).min(1).max(4).default(DEFAULTS.poolFactor).description('Rank-fusion pool multiplier.').volatile(),
   deadlineMs: z.number().step(1).min(1000).max(MAX_DEADLINE_MS).default(DEFAULTS.deadlineMs).description('Whole-search deadline in ms.').volatile(),
   timeoutMs: z.number().step(1).min(1000).max(60000).default(DEFAULTS.timeoutMs).description('Per-source timeout in ms.').volatile(),
   rerank: z.boolean().default(DEFAULTS.rerank).description('Rerank fused results lexically over title, description, tags and excerpt.').volatile(),
   sourceConfidence: z.boolean().default(DEFAULTS.sourceConfidence).description('Down-weight sources whose batch never mentions the query.').volatile(),
-  userAgent: z.string().description('User-Agent for provider requests. Default refkit-dsh-plugin/<version>.').volatile(),
+  userAgent: z.string().description('User-Agent for source requests. Default refkit-dsh-plugin/<version>.').volatile(),
 })
 
 /** Config as `apply` receives it: every field a live Loader reference. */

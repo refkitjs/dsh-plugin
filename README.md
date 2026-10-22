@@ -4,11 +4,11 @@ English | [中文](README.zh.md)
 
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin for [refkit](https://github.com/refkitjs/refkit): license-normalized creative reference search as native agent tools, with a web card that shows the license and the use-verdict on every result.
 
-- **`refkit_search`** — one call fans out to up to 23 sources (Openverse, Met, Art Institute of Chicago, Wikimedia Commons, Rijksmuseum, Smithsonian, Internet Archive, Project Gutenberg, PoetryDB, Poly Haven, ambientCG, Europeana, Unsplash, Pexels, Pixabay, Flickr, Freesound, Jamendo, Brave, nailbook), merges and reranks the results, and returns each with its license id, canonical link, and — when you pass an `intent` — a use-verdict and a ready credit line.
+- **`refkit_search`** — one call fans out to up to 24 sources (Openverse images and audio, Met, Art Institute of Chicago, Wikimedia Commons, Rijksmuseum, Smithsonian, Internet Archive, Project Gutenberg, PoetryDB, Poly Haven textures and HDRIs, ambientCG, Europeana, Unsplash, Pexels, Pixabay, Flickr, Freesound, Jamendo, Brave, nailbook), merges and reranks the results, and returns each with its source id, license id, canonical link, the length of audio and video clips, and — when you pass an `intent` — a use-verdict and a ready credit line.
 - **`refkit_rights`** — re-check one license for a different intent without searching again.
-- **Web card** — thumbnail grid; license chip on every tile; green / blue / red / amber badges for allowed / credit required / not allowed / needs review; one-click credit copy.
+- **Web card** — thumbnail grid; source and license chips on every tile; video posters with a play mark, album art on audio, and an `m:ss` length badge on both; green / blue / red / amber badges for allowed / credit required / not allowed / needs review; one-click credit copy.
 
-Eleven sources work with no key at all (Openverse, Met, Art Institute of Chicago, Wikimedia Commons, Rijksmuseum, Internet Archive, Project Gutenberg, PoetryDB, Poly Haven, ambientCG, nailbook). Add free keys for the rest under **Plugins (sidebar) → refkit → Components → refkit**.
+Thirteen of the 24 sources work with no key at all (Openverse images and audio, Met, Art Institute of Chicago, Wikimedia Commons, Rijksmuseum, Internet Archive, Project Gutenberg, PoetryDB, Poly Haven textures and HDRIs, ambientCG, nailbook). Add free keys for the rest under **Plugins (sidebar) → refkit → Components → refkit**.
 
 ## Install
 
@@ -39,14 +39,14 @@ Keys and tuning are set on **Plugins (sidebar) → refkit → Components → ref
 
 | Field | Default | Meaning |
 | --- | --- | --- |
-| `sources` | `[]` | Provider ids to enable; empty = every source whose key is present |
-| `limit` | `12` | Default results per call (1–30); also caps per-item detail fetches for met, rijksmuseum, polyhaven |
+| `sources` | `[]` | Source ids to enable; empty = every source whose key is present |
+| `limit` | `12` | Default results per call (1–30); also caps per-item detail fetches for met, rijksmuseum, polyhaven, polyhaven-hdri |
 | `poolFactor` | `2` | Rank-fusion pool multiplier (1–4) |
 | `deadlineMs` | `15000` | Whole-search deadline |
 | `timeoutMs` | `10000` | Per-source timeout |
 | `rerank` | `true` | Lexical reranker over title, description, tags and excerpt (CJK aware) |
 | `sourceConfidence` | `true` | Down-weight sources whose batch never mentions the query |
-| `userAgent` | `refkit-dsh-plugin/<version>` | Sent with provider requests |
+| `userAgent` | `refkit-dsh-plugin/<version>` | Sent with source requests |
 
 ## Tools
 
@@ -58,14 +58,16 @@ Keys and tuning are set on **Plugins (sidebar) → refkit → Components → ref
 | `modalities` | `image` `video` `audio` `text` | Default `["image"]` |
 | `intent` | `internal-moodboard` `commercial-product` `ai-generation-input` `redistribution` | Annotate every result with a use-verdict and credit line |
 | `gateFor` | same | Return only results whose license allows the intent |
-| `sources` | string[] | Restrict to provider ids |
+| `sources` | string[] | Restrict to source ids (`polyhaven-hdri` for HDRIs, `openverse-audio` for audio, …) |
 | `limit` | 1–30 | Default from configuration |
 | `cursor` | string | Continuation from a previous `nextCursor` |
 | `controls` | object | orientation, color, language, sort, safety, license, media, creator, text, page |
 | `minRelevance` | 0–1 | Drop results the reranker scored below this |
 | `explain` | boolean | Include per-source diagnostics under `meta` |
 
-Example prompts: “find me reference photos of brutalist libraries I can use in a commercial pitch deck”, “给我找几张可以商用的赛博朋克街景参考图”, “a public-domain poem about the sea for a poster”.
+Each result names its `source` id and carries its license, canonical link, thumbnail (a video's poster, a track's album art) and, for audio and video, `durationSec`; `width`/`height` are the original's size, or the preview's when the source does not report it.
+
+Example prompts: “find me reference photos of brutalist libraries I can use in a commercial pitch deck”, “给我找几张可以商用的赛博朋克街景参考图”, “a public-domain poem about the sea for a poster”, “an outdoor HDRI for lighting a product render”, “a short rain sound effect for a game trailer”.
 
 ### `refkit_rights`
 
