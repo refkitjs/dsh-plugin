@@ -11,7 +11,7 @@ import z from '@deepseek-ai/schemastery';
 import { type ReferenceProvider, type RefkitClient, type RefkitOptions } from '@refkit/core';
 import type { Modality } from './core/outcome.ts';
 /** Kept in sync with package.json by tests/config.test.ts. */
-export declare const PLUGIN_VERSION = "0.2.0";
+export declare const PLUGIN_VERSION = "0.3.0";
 export declare const KEY_FIELDS: readonly ["unsplashAccessKey", "pexelsApiKey", "pixabayKey", "flickrApiKey", "smithsonianApiKey", "braveToken", "freesoundToken", "jamendoClientId", "europeanaApiKey", "openverseToken"];
 export type KeyField = (typeof KEY_FIELDS)[number];
 /** Environment names per key, first match wins. The nine keyed sources mirror @refkit/mcp's CLI. */
