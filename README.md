@@ -18,7 +18,9 @@ dsh plugin --profile web add @refkit/dsh-plugin
 dsh plugin --profile web add github:refkitjs/dsh-plugin
 ```
 
-Restart the dsh web host once so the profile picks up the bundle. Tested against `@deepseek-ai/dsh` 0.1.7-rc.2. Requires dsh 0.1.x from 0.1.7-rc.2 on (`^0.1.7-rc.2`); dsh refuses to load it on older releases and on the 0.2.0 pre-releases (`next`) until support is widened. dsh is in developer preview and its plugin API changes between release candidates.
+Restart the dsh web host once so the profile picks up the bundle. Tested against `@deepseek-ai/dsh` 0.1.7-rc.2 and 0.2.1-rc.2. Requires dsh 0.1.x from 0.1.7-rc.2 on, or 0.2.x from 0.2.1-rc.2 on (`^0.1.7-rc.2 || ^0.2.1-rc.2`); dsh refuses to load it on older releases and on the 0.2.0 pre-releases. dsh is in developer preview and its plugin API changes between release candidates.
+
+Upgraded dsh to 0.2.1 with refkit 0.2.0 or 0.3.0 installed? dsh 0.2.1 refuses both, so remove the plugin and add it again: `dsh plugin --profile web remove @refkit/dsh-plugin`, then `dsh plugin --profile web add @refkit/dsh-plugin`.
 
 ## Configuration
 

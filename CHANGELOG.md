@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1
+
+- **dsh 0.2.1.** Runs on dsh 0.2.1-rc.2 as well as 0.1.7-rc.2: `engines.dsh` and the dsh peers are `^0.1.7-rc.2 || ^0.2.1-rc.2`. dsh 0.2.1 refuses 0.2.0 and 0.3.0, which only declare `^0.1.7-rc.2`; if you upgraded dsh with one of them installed, remove the plugin and add it again.
+
 ## 0.3.0
 
 Built on refkit core 0.10 and the provider releases that go with it; they come in as dependencies, nothing to install by hand.

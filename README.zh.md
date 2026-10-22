@@ -18,7 +18,9 @@ dsh plugin --profile web add @refkit/dsh-plugin
 dsh plugin --profile web add github:refkitjs/dsh-plugin
 ```
 
-重启一次 dsh web host,让该 profile 加载该 bundle。已在 `@deepseek-ai/dsh` 0.1.7-rc.2 上测试通过;要求 dsh 0.1.x 且不低于 0.1.7-rc.2(`^0.1.7-rc.2`),更低版本以及 0.2.0 预发布版(`next` 频道)的 dsh 会拒绝加载该插件,直到后续版本放宽支持范围。dsh 目前处于开发者预览阶段,其插件 API 在各个 release candidate 之间会发生变化。
+重启一次 dsh web host,让该 profile 加载该 bundle。已在 `@deepseek-ai/dsh` 0.1.7-rc.2 和 0.2.1-rc.2 上测试通过;要求 dsh 0.1.x 且不低于 0.1.7-rc.2,或 0.2.x 且不低于 0.2.1-rc.2(`^0.1.7-rc.2 || ^0.2.1-rc.2`),更低版本以及 0.2.0 预发布版的 dsh 会拒绝加载该插件。dsh 目前处于开发者预览阶段,其插件 API 在各个 release candidate 之间会发生变化。
+
+装着 refkit 0.2.0 或 0.3.0 时把 dsh 升级到了 0.2.1?dsh 0.2.1 会拒绝这两个版本,先移除再重新添加即可:`dsh plugin --profile web remove @refkit/dsh-plugin`,然后 `dsh plugin --profile web add @refkit/dsh-plugin`。
 
 ## 配置
 

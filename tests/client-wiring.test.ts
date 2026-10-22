@@ -79,7 +79,7 @@ function fakeConfigForms({ storedKeys = [], served: initiallyServed = [] }: { st
   const writes: unknown[] = []
   const watches: { namespaces: readonly string[]; register: (served: ReadonlySet<string>) => () => void; live?: () => void; ended: boolean }[] = []
   const formSnapshot: ConfigFormSnapshot<Record<string, unknown>> = {
-    status: 'ready', value: { limit: 12 }, base: { limit: 12 }, user: {}, revision: 1, writable: true, mode: 'host',
+    status: 'ready', value: { limit: 12 }, base: { limit: 12 }, user: {}, revision: 1, writable: true,
   }
   const mirrorSnapshot: SettingsMirrorSnapshot = {
     status: 'ready',
