@@ -1,9 +1,11 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { PLUGIN_VERSION } from '../src/config.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
+  version?: string
   icon?: string
   exports?: Record<string, unknown>
   files?: string[]
@@ -58,5 +60,11 @@ describe('dsh compatibility range', () => {
     const dshPeers = Object.entries(pkg.peerDependencies ?? {}).filter(([name]) => name.startsWith('@deepseek-ai/dsh-'))
     expect(dshPeers.length).toBeGreaterThan(0)
     for (const [name, range] of dshPeers) expect(range, name).toBe(DSH_RANGE)
+  })
+})
+
+describe('plugin version', () => {
+  it('PLUGIN_VERSION (the default User-Agent) matches package.json', () => {
+    expect(PLUGIN_VERSION).toBe(pkg.version)
   })
 })

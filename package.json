@@ -1,6 +1,6 @@
 {
   "name": "@refkit/dsh-plugin",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "DeepSeek Harness plugin for refkit: license-normalized creative reference search across 24 sources from 19 provider packages and 4 modalities, a strict-deny use-gate, and a web card with license and use-verdict badges (refkit_search / refkit_rights).",
   "icon": "./icon.svg",
   "type": "module",
