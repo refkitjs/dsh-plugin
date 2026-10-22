@@ -6,7 +6,7 @@
  * @module @refkit/dsh-plugin/tools/search
  */
 import { type InferArgs, type ToolDefinition } from '@deepseek-ai/dsh-tools';
-import { type Attribution, type ProviderSearchStatus, type Reference, type RefkitClient, type Verdict } from '@refkit/core';
+import { type Attribution, type Reference, type RefkitClient, type SourceStatus as CoreSourceStatus, type Verdict } from '@refkit/core';
 import { type ResolvedConfig } from '../config.ts';
 import { type RefTile, type SearchOutcome, type SourceStatus } from '../core/outcome.ts';
 export declare const SEARCH_TOOL_NAME = "refkit_search";
@@ -43,7 +43,7 @@ export declare const SEARCH_PARAMETERS: {
         readonly items: {
             readonly type: "string";
         };
-        readonly description: "Restrict to provider ids (see the tool description). Omit to search every enabled source.";
+        readonly description: "Restrict to source ids (see the tool description). Omit to search every enabled source.";
     };
     readonly limit: {
         readonly type: "integer";
@@ -56,7 +56,7 @@ export declare const SEARCH_PARAMETERS: {
     readonly controls: {
         readonly type: "object";
         readonly additionalProperties: false;
-        readonly description: "Provider-neutral search controls; each source applies the ones it supports and the rest are reported as ignored.";
+        readonly description: "Source-neutral search controls; each source applies the ones it supports and the rest are reported as ignored.";
         readonly properties: {
             readonly orientation: {
                 readonly type: "string";
@@ -143,7 +143,7 @@ export declare const SEARCH_PARAMETERS: {
             };
             readonly page: {
                 readonly type: "integer";
-                readonly description: "provider-local page (1-based)";
+                readonly description: "source-local page (1-based)";
             };
         };
     };
@@ -195,7 +195,7 @@ export declare const SEARCH_OUTPUT: {
                         readonly enum: readonly ["image", "video", "audio", "text"];
                         readonly required: true;
                     };
-                    readonly provider: {
+                    readonly source: {
                         readonly type: "string";
                         readonly required: true;
                     };
@@ -229,6 +229,9 @@ export declare const SEARCH_OUTPUT: {
                         readonly type: "number";
                     };
                     readonly height: {
+                        readonly type: "number";
+                    };
+                    readonly durationSec: {
                         readonly type: "number";
                     };
                     readonly description: {
@@ -313,13 +316,17 @@ export declare const SEARCH_OUTPUT: {
         };
     };
 };
-/** Project one core Reference (plus optional assessment) onto a tile with no undefined keys. */
+/**
+ * Project one core Reference (plus optional assessment) onto a tile with no undefined keys. Width and
+ * height fall back to the preview rendition when the original's size (`visual`) is unknown, as for
+ * flickr and pixabay-video; the duration comes from the audio or video variant.
+ */
 export declare function toTile(ref: Reference, assessment?: {
     verdict: Verdict;
     attribution: Attribution;
 }): RefTile;
-/** Compact projection of core's per-provider status. */
-export declare function toSourceStatus(status: ProviderSearchStatus): SourceStatus;
+/** Compact projection of core's per-source status. */
+export declare function toSourceStatus(status: CoreSourceStatus): SourceStatus;
 /** Execute one search against the current client and shape the canonical value. */
 export declare function runSearch(args: SearchArgs, deps: SearchDeps, signal?: AbortSignal): Promise<SearchOutcome>;
 /** The registered definition. */

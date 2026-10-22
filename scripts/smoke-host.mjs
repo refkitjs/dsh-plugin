@@ -3,7 +3,7 @@
 // Live part: mount the host half on a fake Cordis context and run one keyless
 // search. Needs network; gated so CI never runs it.
 //   REFKIT_LIVE=1 node scripts/smoke-host.mjs "forest path"
-import { apply, name, inject, Config, renderSearch, runSearch, resolveConfig, PROVIDER_IDS } from '../lib/index.js'
+import { apply, name, inject, Config, renderSearch, runSearch, resolveConfig, SOURCE_IDS } from '../lib/index.js'
 
 const surface = [
   ["name === 'refkit'", name === 'refkit'],
@@ -32,7 +32,7 @@ const ctx = {
 }
 apply(ctx, Config({}))
 console.log('registered tools:', registered.join(', '))
-console.log('registry ids:', PROVIDER_IDS.length)
+console.log('registry ids:', SOURCE_IDS.length)
 
 const { createRefkit } = await import('@refkit/core')
 const { buildClient } = await import('../lib/index.js')

@@ -42,6 +42,13 @@ describe('plugin entry', () => {
     expect(name).toBe('refkit')
     expect(inject).toEqual(['tools'])
   })
+  it('exports the source id lists under their 0.3.0 names', async () => {
+    const entry: Record<string, unknown> = await import('../src/index.ts')
+    expect(entry.SOURCE_IDS).toHaveLength(24)
+    expect(entry.RETIRED_SOURCE_IDS).toEqual([])
+    expect(entry).not.toHaveProperty('PROVIDER_IDS')
+    expect(entry).not.toHaveProperty('RETIRED_IDS')
+  })
   it('registers both tools with no optional services mounted', () => {
     const { ctx, registered } = fakeContext()
     apply(ctx as never, Config({}))

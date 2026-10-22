@@ -9,65 +9,65 @@ importers:
   .:
     dependencies:
       '@refkit/core':
-        specifier: ^0.9.0
-        version: 0.9.0
+        specifier: ^0.10.0
+        version: 0.10.0
       '@refkit/provider-artic':
-        specifier: ^0.4.1
-        version: 0.4.1
+        specifier: ^0.5.0
+        version: 0.5.0
       '@refkit/provider-brave':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.5.0
+        version: 0.5.0
       '@refkit/provider-europeana':
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.6.0
+        version: 0.6.0
       '@refkit/provider-flickr':
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.6.0
+        version: 0.6.0
       '@refkit/provider-freesound':
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.6.0
+        version: 0.6.0
       '@refkit/provider-gutendex':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.5.0
+        version: 0.5.0
       '@refkit/provider-internet-archive':
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.6.0
+        version: 0.6.0
       '@refkit/provider-jamendo':
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.6.0
+        version: 0.6.0
       '@refkit/provider-met':
-        specifier: ^0.4.0
-        version: 0.4.0
-      '@refkit/provider-nailbook':
-        specifier: ^0.2.0
-        version: 0.2.0
-      '@refkit/provider-openverse':
-        specifier: ^0.5.1
-        version: 0.5.1
-      '@refkit/provider-pexels':
-        specifier: ^0.4.0
-        version: 0.4.0
-      '@refkit/provider-pixabay':
-        specifier: ^0.4.0
-        version: 0.4.0
-      '@refkit/provider-poetrydb':
-        specifier: ^0.4.0
-        version: 0.4.0
-      '@refkit/provider-polyhaven':
-        specifier: ^0.4.0
-        version: 0.4.0
-      '@refkit/provider-rijksmuseum':
-        specifier: ^0.4.0
-        version: 0.4.0
-      '@refkit/provider-smithsonian':
-        specifier: ^0.4.0
-        version: 0.4.0
-      '@refkit/provider-unsplash':
-        specifier: ^0.4.0
-        version: 0.4.0
-      '@refkit/provider-wikimedia-commons':
         specifier: ^0.5.0
         version: 0.5.0
+      '@refkit/provider-nailbook':
+        specifier: ^0.3.0
+        version: 0.3.0
+      '@refkit/provider-openverse':
+        specifier: ^0.6.0
+        version: 0.6.0
+      '@refkit/provider-pexels':
+        specifier: ^0.5.0
+        version: 0.5.0
+      '@refkit/provider-pixabay':
+        specifier: ^0.5.0
+        version: 0.5.0
+      '@refkit/provider-poetrydb':
+        specifier: ^0.5.0
+        version: 0.5.0
+      '@refkit/provider-polyhaven':
+        specifier: ^0.5.0
+        version: 0.5.0
+      '@refkit/provider-rijksmuseum':
+        specifier: ^0.5.0
+        version: 0.5.0
+      '@refkit/provider-smithsonian':
+        specifier: ^0.5.0
+        version: 0.5.0
+      '@refkit/provider-unsplash':
+        specifier: ^0.5.0
+        version: 0.5.0
+      '@refkit/provider-wikimedia-commons':
+        specifier: ^0.6.0
+        version: 0.6.0
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: ~4.0.4
@@ -711,65 +711,65 @@ packages:
   '@quansync/fs@1.1.0':
     resolution: {integrity: sha512-qAPG/t3HqML1TlN7sY/pTbEjzFVAKsMjNNMGheyDosro+kT4iw2KCUoHcVdmliwWjorm4elZbgNQyU2eD97eDg==}
 
-  '@refkit/core@0.9.0':
-    resolution: {integrity: sha512-5DFX7gsq/f2rCnHXViHWmvjtuUEJ3yXK7S9rAGxv8hV95GzygL3JyZDAhHtV4doqIru47mXCQG2JE00622AEuw==}
+  '@refkit/core@0.10.0':
+    resolution: {integrity: sha512-ou1GYMyk1hfRwDUTbXio8Kd4BPHwby0p+kwjaXri9RoF92MhGKfH8yN3VVxIEe56Bk1S0RLwftyeqGVIRFArEA==}
 
-  '@refkit/provider-artic@0.4.1':
-    resolution: {integrity: sha512-/XWWEIKf9ZSYUYIYgttUNp1W65MFsOwK5o937xp6yseLObBhcMdnEiF+jbaKVdyRtqsPbxVUKUglk72wgLM1rA==}
+  '@refkit/provider-artic@0.5.0':
+    resolution: {integrity: sha512-LD0q3KAoLEB8zL+uvgrv7YX9ZhmHzwbO3+MBiVcmg+b4O/h4MxKx6wtVQ38900JTAz6ZdI++7ROYjkyg7AE8vQ==}
 
-  '@refkit/provider-brave@0.4.0':
-    resolution: {integrity: sha512-xoglGGKzXWJm1lnvY39zqeFsTLGhaqW76mq5qHvQQCw8yMIKs4x0M+N0Heha2OhmdmoveBo7yOPlOu01butSBw==}
+  '@refkit/provider-brave@0.5.0':
+    resolution: {integrity: sha512-0PKYl4kgMqEQXQ6xzSay+1XDOzD3dTi69fxGDFfUaXZ46GH7g7J7rcaH2dEKixnhHd8jPn9b2lXn2vBUngxHig==}
 
-  '@refkit/provider-europeana@0.5.0':
-    resolution: {integrity: sha512-pylocy1E/kKERssvpFM8JlSbrfD/8mL81FAwbA8YODPUP2aA6m88NXdhXCC2ERWZnP8i8gUYqpxsArLLVA8PgQ==}
+  '@refkit/provider-europeana@0.6.0':
+    resolution: {integrity: sha512-ve6PdwXnS+ND06RfEVMFG2GtxsQSz22qgLopM/jrxELQG+xVGK6566Imxge6Vm7S24e6+aIVZQ6+cOL0yEzB4Q==}
 
-  '@refkit/provider-flickr@0.5.0':
-    resolution: {integrity: sha512-k5ZC3xWCqsi26tZT7C4y6H0Odi0yHGNWuNBGt1a2PrkIePXaYjYgrsGCcloo1/4uwOpsW5sDT8BqAH9ZNv7HeA==}
+  '@refkit/provider-flickr@0.6.0':
+    resolution: {integrity: sha512-fBkfcQhwKsGBFPUOcDDly66G73VvQbDtHtJ6g48abeE2fUjwBbpV+VnUeR0Tw91hqVwtljUeseGeoNajDK51aw==}
 
-  '@refkit/provider-freesound@0.5.0':
-    resolution: {integrity: sha512-+bWPSTTblMBwWnkjSsZ7ZoMoWun09Dp+ThteQRK0ZqDQP+YyViZlfNvsnoOlvZeiNsJZFfQv66pWAX6PofsyaQ==}
+  '@refkit/provider-freesound@0.6.0':
+    resolution: {integrity: sha512-vuL2Hr5amQGemf7U9L5FywyelZOcOY/pMwN877n4AeBDtC72iEx5G1frO5oqPqqfcGKmVZIjHlif5mZKXDdCUQ==}
 
-  '@refkit/provider-gutendex@0.4.0':
-    resolution: {integrity: sha512-VUetCpCPAvr09fYXgtv436wKt1RcLYkNLZTOoGTxeYSzM8lHyIyNtkmTcuI2zh3rcIcH0F3AsrtQsVeScDK9Qg==}
+  '@refkit/provider-gutendex@0.5.0':
+    resolution: {integrity: sha512-ey8tS+zG/ZeVrdPFFyLQXdGlLuF0b/T+0dJP6RhmIDrKpjpC695fE0GBWpVuNvWfPpsH58ByEt149nRrrcD7Jw==}
 
-  '@refkit/provider-internet-archive@0.5.0':
-    resolution: {integrity: sha512-P2skCH5XQzsXB6N+MqaqgLc+Xxqx8Om534tiTsuKJ7bLd8FdCNAJ4v/xlGi5IXdthro4J5KK/x2p+WqilEkyHw==}
+  '@refkit/provider-internet-archive@0.6.0':
+    resolution: {integrity: sha512-V8RVtaYzWAJGi/3Qr5gw0FSJZ9qk4YA5GiX+odt6gfRZ0eYW2Z7IuYSnyV/aWtyMAVKDOn8Gepn3wcIhWM4tew==}
 
-  '@refkit/provider-jamendo@0.5.0':
-    resolution: {integrity: sha512-fTGz7E8XreS9QDwfO1p4sHkel1rgf8Xp+qfzMhFUDmZ7kLmiNhl6e6gqZrUdRol/FXe92ZZusp3Nse52S3nasw==}
+  '@refkit/provider-jamendo@0.6.0':
+    resolution: {integrity: sha512-xcA9iFYsNfBBFSLa+Q8i7083R0CzHyslVND9NwmqugyCo+MttwpMA2BAUus/qvYLRQm4qnM8HYp7n2rjPQzl5g==}
 
-  '@refkit/provider-met@0.4.0':
-    resolution: {integrity: sha512-SeccznxatteNQozYiIq+2rtbD+4UzOSacwY0vGgKuAHqtjIV/60iK5QdcvlhsqHKvQEWejn4K8GHQotYGzWpJA==}
+  '@refkit/provider-met@0.5.0':
+    resolution: {integrity: sha512-McwvgXhWXnkgr4dV48W6/nUheRiZ1QnhxoW1gccQnn9TfI4dEJyU44g1TQu7dv+ggFhi1+6UXnKlQZcOEodyoA==}
 
-  '@refkit/provider-nailbook@0.2.0':
-    resolution: {integrity: sha512-j4F+7lo1aN9RxiZ7WMt1m+jex+5FwsfKluiLzRN0Sh7UcHq4WYdfsGhrEcXTFcY3QUZMxcAstYOO47EN0WJSZQ==}
+  '@refkit/provider-nailbook@0.3.0':
+    resolution: {integrity: sha512-jfiPYQy2SAlEJpjdLCaZwFMxYnGbnjSwceOG5r55i5YaQ7nop9MuPZxpJh9WCDFt4a+b/G7EGWPfRq8eu8Whbw==}
 
-  '@refkit/provider-openverse@0.5.1':
-    resolution: {integrity: sha512-H/LbZ2PT7JH1sVqS6cSlpm6PYHXRxZKhpp6eIsVIA7l4j3P7H6SubcbY7vlhj5JmG4PfV3iqviVkCSaUq57xBg==}
+  '@refkit/provider-openverse@0.6.0':
+    resolution: {integrity: sha512-+KkG0KE8pVKSeNeckgRvYy30es1uzykaYD7s3j0hXEw2g7YkV7aIZUuT9JSoe12eMr7OJqlk6jC0nVWWTixiUQ==}
 
-  '@refkit/provider-pexels@0.4.0':
-    resolution: {integrity: sha512-ItgBov1yf3dfBNVtE0NkzcfBJnfyBR9ySfG47RKGQ2qImNplalABSekY97gQ6h1qax/qKRjKYil7Zd+4yNJPaQ==}
+  '@refkit/provider-pexels@0.5.0':
+    resolution: {integrity: sha512-Q+SjSE04yGF/WhJAqAOPOGfJJjU/f6LyBHT92YHQ4A8YYnjp89JgLi2vI4OOt4ONQ4rzPexjM4QPL6fwDWHT2Q==}
 
-  '@refkit/provider-pixabay@0.4.0':
-    resolution: {integrity: sha512-xxDTd9d0aTCW5iCXzUFwROSIUqvzaWpflDnEQLEux5BsDowCARewoYgw/cJBBxox3yi7cXafC0OTS/mnMorPhA==}
+  '@refkit/provider-pixabay@0.5.0':
+    resolution: {integrity: sha512-RTpZzZTtSzlhav1pgF960I25hvqC49uQP96JR5zLBXT9eyYVAmV7FovLjv3rTEiQkqQHyXgLV9ETZKGmvykvTw==}
 
-  '@refkit/provider-poetrydb@0.4.0':
-    resolution: {integrity: sha512-EcozKwnrfmpG65SFqXCxoi5Shk15EsIlNqxS14MtDAgQLcbj++SqU8m4MczW3EVHXIC4+IxGwjwk6usA8c7Vow==}
+  '@refkit/provider-poetrydb@0.5.0':
+    resolution: {integrity: sha512-Fuu8ltTrcwZ0aUC+2h/4eK4rt6iDp9EM0Fyw50b2U6fXRYcCYSXC+UD+FWe5Ee7xqe35HNhMFo/fmpdQyatXZg==}
 
-  '@refkit/provider-polyhaven@0.4.0':
-    resolution: {integrity: sha512-4pqea1vSyCk/ovfdJZyofv0bTnJqq2ZAJQxLs8an0XM4XbfXNm1IGDL2Yvt5cXCeawrX/gwFgdqxDX+hYyZwKQ==}
+  '@refkit/provider-polyhaven@0.5.0':
+    resolution: {integrity: sha512-Rp0aR04N5WlpzMXuxqJEgtvOKwf0+TIjsob3nczsTmXPUvcCFGjziZmKkLkjJZfhZtOWcNLxN0AvykHN/DGqWg==}
 
-  '@refkit/provider-rijksmuseum@0.4.0':
-    resolution: {integrity: sha512-3a8eIqGC3UxdX68J0fFDFOXCEM2ogHHg6QYvJ5h3i5JJ9DG0gnykBLSP/oBYYaVOR+j1CsCAS7C7YBXX6H6f/Q==}
+  '@refkit/provider-rijksmuseum@0.5.0':
+    resolution: {integrity: sha512-2etRHs6r6kCxXPxf3yFvRO6FnvIadtu+vImdWVTDUhTLEokVYGs/Ysezbg1H7JDBvDZQyJZJopmW31jUceJK4Q==}
 
-  '@refkit/provider-smithsonian@0.4.0':
-    resolution: {integrity: sha512-1KZWj6TOCHivO/R5TCDU9eLzPFqxHpSr8qKFyXpZkg4XQ+/BTSQpeRq9/txPP2NzH2fN4CoKx+RJv2FJAMMcPA==}
+  '@refkit/provider-smithsonian@0.5.0':
+    resolution: {integrity: sha512-/4Fy+AHUIY28plAhDHOrIIUTOh9MSWZ+EbRTuyrMbiZoCx09+vjboiyoijZzplBkh4AbUMrQVqYawsOb5gH52Q==}
 
-  '@refkit/provider-unsplash@0.4.0':
-    resolution: {integrity: sha512-zqcABmwy0fOmnDN/iLra5iq+5GrCICSrPtTZ2U3zGO4Do99R9dB2Fogy3elCdbYn7Oxg0E6MPCk/9zme1EFvug==}
+  '@refkit/provider-unsplash@0.5.0':
+    resolution: {integrity: sha512-LCUVYK5JmyaG/cXS1P7YYc+FfCf8eucnfjHkAGzVmQ4ORbUnak1bQUznT8p1nifYsA5BRk/UXRH0yd8eJ60vig==}
 
-  '@refkit/provider-wikimedia-commons@0.5.0':
-    resolution: {integrity: sha512-lEONNdDtiP29aqJRHTPX+cDvbePNyt9lKeRJxhUIJ1WtdRGakcWQCxwfRaUDfgIUc0X/SYSNJvu6hwS33o/Rng==}
+  '@refkit/provider-wikimedia-commons@0.6.0':
+    resolution: {integrity: sha512-NM3cG8e+V9pQK/7cMNdisKLo3LN1O1atIvkw4+HC+Ba/Ka6muOEWiWEya4+CXHmc8Wp+/nhtPMjFqriGNKuoQg==}
 
   '@rolldown/binding-android-arm64@1.1.5':
     resolution: {integrity: sha512-lZg8fqIv2v7FF237bwMgzGZEJvGL79/s5knJ/i6FmsGF4XXlzccZ4jb+TrFIxtSSxFtIpdsgrPZeMk1I9AFcyQ==}
@@ -2325,85 +2325,85 @@ snapshots:
     dependencies:
       quansync: 1.0.0
 
-  '@refkit/core@0.9.0':
+  '@refkit/core@0.10.0':
     dependencies:
       zod: 4.6.5
 
-  '@refkit/provider-artic@0.4.1':
+  '@refkit/provider-artic@0.5.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-brave@0.4.0':
+  '@refkit/provider-brave@0.5.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-europeana@0.5.0':
+  '@refkit/provider-europeana@0.6.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-flickr@0.5.0':
+  '@refkit/provider-flickr@0.6.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-freesound@0.5.0':
+  '@refkit/provider-freesound@0.6.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-gutendex@0.4.0':
+  '@refkit/provider-gutendex@0.5.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-internet-archive@0.5.0':
+  '@refkit/provider-internet-archive@0.6.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-jamendo@0.5.0':
+  '@refkit/provider-jamendo@0.6.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-met@0.4.0':
+  '@refkit/provider-met@0.5.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-nailbook@0.2.0':
+  '@refkit/provider-nailbook@0.3.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-openverse@0.5.1':
+  '@refkit/provider-openverse@0.6.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-pexels@0.4.0':
+  '@refkit/provider-pexels@0.5.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-pixabay@0.4.0':
+  '@refkit/provider-pixabay@0.5.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-poetrydb@0.4.0':
+  '@refkit/provider-poetrydb@0.5.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-polyhaven@0.4.0':
+  '@refkit/provider-polyhaven@0.5.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-rijksmuseum@0.4.0':
+  '@refkit/provider-rijksmuseum@0.5.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-smithsonian@0.4.0':
+  '@refkit/provider-smithsonian@0.5.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-unsplash@0.4.0':
+  '@refkit/provider-unsplash@0.5.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
-  '@refkit/provider-wikimedia-commons@0.5.0':
+  '@refkit/provider-wikimedia-commons@0.6.0':
     dependencies:
-      '@refkit/core': 0.9.0
+      '@refkit/core': 0.10.0
 
   '@rolldown/binding-android-arm64@1.1.5':
     optional: true

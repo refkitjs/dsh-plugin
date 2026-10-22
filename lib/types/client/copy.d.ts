@@ -35,7 +35,7 @@ export declare const COPY: {
         readonly removeFailed: "Not removed; try again.";
         readonly searchHeading: "Search";
         readonly limit: "Results per call";
-        readonly limitHint: "Also caps per-item detail fetches for met, rijksmuseum and polyhaven.";
+        readonly limitHint: "Also caps per-item detail fetches for met, rijksmuseum, polyhaven and polyhaven-hdri.";
         readonly poolFactor: "Fusion pool factor";
         readonly poolFactorHint: "Rank-fusion pool multiplier.";
         readonly deadlineMs: "Search deadline (ms)";
@@ -52,12 +52,12 @@ export declare const COPY: {
             max: number;
         }) => string;
         readonly sources: "Sources";
-        readonly sourcesHint: "Comma-separated provider ids. A keyed source also needs its key.";
+        readonly sourcesHint: "Comma-separated source ids. A keyed source also needs its key.";
         readonly sourcesPlaceholder: "empty = all enabled sources";
         readonly sourcesHelp: "Source ids";
         readonly sourcesInvalid: "Unknown source id. Use the ids listed under the info button.";
         readonly userAgent: "User-Agent";
-        readonly userAgentHint: "Sent with provider requests. Blank uses refkit-dsh-plugin/<version>.";
+        readonly userAgentHint: "Sent with source requests. Blank uses refkit-dsh-plugin/<version>.";
         readonly rerank: "Lexical rerank";
         readonly rerankHint: "Rerank fused results over title, description, tags and excerpt.";
         readonly sourceConfidence: "Source confidence";

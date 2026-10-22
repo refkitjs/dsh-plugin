@@ -8,7 +8,7 @@
     - id: refkit
       name: '@refkit/dsh-plugin'
       config:
-        # sources: []            # whitelist of provider ids; empty = every enabled source
+        # sources: []            # whitelist of source ids; empty = every enabled source
         # limit: 12              # default results per call (1..30); also caps museum detail fetches
         # poolFactor: 2          # fusion pool multiplier (1..4)
         # deadlineMs: 15000      # whole-search deadline

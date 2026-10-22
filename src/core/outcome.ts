@@ -28,7 +28,8 @@ export interface VerdictSummary {
 export interface RefTile {
   id: string
   modality: Modality
-  provider: string
+  /** The source id (e.g. `openverse-audio`); 0.2.0 tiles named it `provider`. */
+  source: string
   canonicalUrl: string
   license: string
   title?: string
@@ -37,8 +38,11 @@ export interface RefTile {
   author?: string
   thumbnail?: string
   preview?: string
+  /** The original's dimensions when known, else the preview rendition's (the aspect ratio is the same). */
   width?: number
   height?: number
+  /** Audio and video length in seconds (a float). */
+  durationSec?: number
   description?: string
   excerpt?: string
   tags?: string[]
@@ -85,6 +89,19 @@ export function defined<T extends object>(obj: T): T {
   return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T
 }
 
+/**
+ * A duration as `m:ss`, or `h:mm:ss` from an hour on, rounded to the nearest second; a
+ * sub-second clip reads `0:01`, never `0:00`. Undefined for a missing, non-finite or non-positive value.
+ */
+export function formatDuration(sec: number | undefined): string | undefined {
+  if (sec === undefined || !Number.isFinite(sec) || sec <= 0) return undefined
+  const total = Math.max(1, Math.round(sec))
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const ss = String(total % 60).padStart(2, '0')
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`
+}
+
 /** Cut `text` to `max` code points, appending an ellipsis when anything was removed. */
 export function trunc(text: string, max: number): string {
   const points = Array.from(text)
@@ -100,18 +117,21 @@ function narrowVerdict(v: unknown): VerdictSummary | undefined {
   return { decision: r.decision as Decision, reason: str(r.reason) ?? '', confidence: r.confidence }
 }
 
-/** Soft-narrow one tile; null for anything unusable. Unknown keys are dropped. */
+/**
+ * Soft-narrow one tile; null for anything unusable. Unknown keys are dropped. A tile persisted by
+ * 0.2.0 names its source `provider`; it is read as `source` so old conversations still render.
+ */
 export function narrowTile(value: unknown): RefTile | null {
   if (typeof value !== 'object' || value === null) return null
   const r = value as Record<string, unknown>
   const id = str(r.id)
-  const provider = str(r.provider)
+  const source = str(r.source) ?? str(r.provider)
   const canonicalUrl = str(r.canonicalUrl)
   const license = str(r.license)
-  if (id === undefined || provider === undefined || license === undefined) return null
+  if (id === undefined || source === undefined || license === undefined) return null
   if (canonicalUrl === undefined || !HTTP.test(canonicalUrl)) return null
   if (!MODALITIES.includes(r.modality as Modality)) return null
-  const tile: RefTile = { id, modality: r.modality as Modality, provider, canonicalUrl, license }
+  const tile: RefTile = { id, modality: r.modality as Modality, source, canonicalUrl, license }
   for (const key of ['title', 'kind', 'licenseVersion', 'author', 'description', 'excerpt', 'attribution'] as const) {
     const s = str(r[key])
     if (s !== undefined) tile[key] = s
@@ -120,7 +140,7 @@ export function narrowTile(value: unknown): RefTile | null {
     const s = str(r[key])
     if (s !== undefined && HTTP.test(s)) tile[key] = s
   }
-  for (const key of ['width', 'height'] as const) {
+  for (const key of ['width', 'height', 'durationSec'] as const) {
     const n = num(r[key])
     if (n !== undefined && n > 0) tile[key] = n
   }

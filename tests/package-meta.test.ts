@@ -22,7 +22,7 @@ describe('locale files', () => {
       expect(doc.meta?.title).toBe('refkit')
       expect(doc.meta?.description).toBeTypeOf('string')
       expect((doc.meta?.description ?? '').length).toBeGreaterThan(0)
-      expect(doc.meta?.description).toContain('23')
+      expect(doc.meta?.description).toContain('24')
     })
   }
 })

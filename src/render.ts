@@ -4,7 +4,7 @@
  * @module @refkit/dsh-plugin/render
  */
 
-import { defined, trunc, type CardOutcome, type RefTile, type SearchOutcome } from './core/outcome.ts'
+import { defined, formatDuration, trunc, type CardOutcome, type RefTile, type SearchOutcome } from './core/outcome.ts'
 
 const EXCERPT_CHARS = 160
 const META_CHARS = 2000
@@ -20,6 +20,12 @@ function licenseLabel(tile: RefTile): string {
   return tile.licenseVersion ? `${tile.license} ${tile.licenseVersion}` : tile.license
 }
 
+/** The source id, then the `m:ss` length of an audio or video reference when known. */
+function sourceLabel(tile: RefTile): string {
+  const duration = tile.modality === 'audio' || tile.modality === 'video' ? formatDuration(tile.durationSec) : undefined
+  return duration ? `${tile.source} — ${duration}` : tile.source
+}
+
 /**
  * One numbered line per reference plus credit/excerpt sub-lines, warnings, the
  * cursor hint and, with `explain`, a bounded `meta:` line — dsh sends the model
@@ -30,7 +36,7 @@ export function renderSearch(value: SearchOutcome): string {
   lines.push(`${value.count} reference(s) for "${value.query}"${value.intent ? ` — intent: ${value.intent}` : ''}`)
   value.references.forEach((tile, i) => {
     const decision = tile.useVerdict ? ` — ${tile.useVerdict.decision}` : ''
-    lines.push(`${i + 1}. ${oneLine(tile.title ?? '') || '(untitled)'} — ${tile.provider} — ${licenseLabel(tile)}${decision} — ${tile.canonicalUrl}`)
+    lines.push(`${i + 1}. ${oneLine(tile.title ?? '') || '(untitled)'} — ${sourceLabel(tile)} — ${licenseLabel(tile)}${decision} — ${tile.canonicalUrl}`)
     const credit = oneLine(tile.attribution ?? '')
     if (credit) lines.push(`   credit: ${credit}`)
     if (tile.modality === 'text' && tile.excerpt) lines.push(`   excerpt: ${trunc(oneLine(tile.excerpt), EXCERPT_CHARS)}`)

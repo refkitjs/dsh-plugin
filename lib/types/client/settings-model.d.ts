@@ -15,16 +15,16 @@
 import type { SettingsFieldSpec, SettingsFormPathOp, SettingsSecretSpec } from '@deepseek-ai/dsh-client-ui-primitives';
 /** The Host settings namespace: the plugin's row id in `cordis.patch.yml`. */
 export declare const SETTINGS_NS = "refkit";
-/** Secret field → the providers it enables. Key order is the page's display order. */
+/** Secret field → the sources it enables. Key order is the page's display order. */
 export declare const KEY_LABELS: Readonly<Record<string, string>>;
 /** The secret fields, in display order. */
 export declare const KEY_FIELDS_CLIENT: readonly string[];
 /** Environment fallbacks per key, first match wins (mirrors `KEY_ENV`). */
 export declare const KEY_ENV_HINT: Readonly<Record<string, readonly string[]>>;
-/** Every provider id `sources` accepts (mirrors `PROVIDER_IDS`). */
+/** Every live source id `sources` accepts (mirrors the host's `SOURCE_IDS` in src/config.ts). */
 export declare const SOURCE_IDS: readonly string[];
 /**
- * Ids that once shipped and were since removed (mirrors `RETIRED_IDS`). `sources` still accepts
+ * Ids that once shipped and were since removed (mirrors the host's `RETIRED_SOURCE_IDS`). `sources` still accepts
  * them, so a stored one never blocks saving the page, but the page does not list them.
  */
 export declare const RETIRED_SOURCE_IDS: readonly string[];
@@ -66,7 +66,7 @@ export type NumberField = keyof typeof NUMBER_BOUNDS;
  */
 export declare function settingsBooleanField(field: string): SettingsFieldSpec;
 /**
- * A provider-id list staged as comma-separated text. Ids are matched
+ * A source-id list staged as comma-separated text. Ids are matched
  * case-insensitively and deduplicated in order; an unknown id makes the draft
  * invalid, which blocks the save. A blank draft clears the field (every
  * enabled source).
