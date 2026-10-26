@@ -68,3 +68,28 @@ describe('plugin version', () => {
     expect(PLUGIN_VERSION).toBe(pkg.version)
   })
 })
+
+// Plugin storefronts (dsh-market, the awesome-dsh-plugin catalog) read screenshots.json
+// next to package.json from the repository: 1-8 relative paths inside the repo.
+describe('screenshots.json', () => {
+  const read = () => JSON.parse(readFileSync(new URL('../screenshots.json', import.meta.url), 'utf8')) as unknown
+
+  it('lists 1-8 relative paths to PNGs that exist in the repository', () => {
+    const list = read()
+    expect(Array.isArray(list)).toBe(true)
+    const paths = list as string[]
+    expect(paths.length).toBeGreaterThanOrEqual(1)
+    expect(paths.length).toBeLessThanOrEqual(8)
+    for (const path of paths) {
+      expect(path, path).not.toMatch(/^\/|\.\.|^https?:/)
+      expect(readFileSync(`${root}${path}`).subarray(0, 8).toString('hex'), path).toBe('89504e470d0a1a0a')
+    }
+  })
+
+  it('keeps the screenshots out of the npm package', () => {
+    for (const path of read() as string[]) {
+      const dir = path.split('/')[0]
+      expect(pkg.files?.some(entry => entry === dir || entry.startsWith(`${dir}/`)), path).toBe(false)
+    }
+  })
+})
