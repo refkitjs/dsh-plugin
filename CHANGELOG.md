@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.2
+
+- **Published with provenance.** Releases now go out from GitHub Actions through npm trusted publishing instead of a long-lived npm token, so each version carries a signed provenance statement that links it to the commit and workflow run that built it. No code changes.
+
 ## 0.3.1
 
 - **dsh 0.2.1.** Runs on dsh 0.2.1-rc.2 as well as 0.1.7-rc.2: `engines.dsh` and the dsh peers are `^0.1.7-rc.2 || ^0.2.1-rc.2`. dsh 0.2.1 refuses 0.2.0 and 0.3.0, which only declare `^0.1.7-rc.2`; if you upgraded dsh with one of them installed, remove the plugin and add it again.

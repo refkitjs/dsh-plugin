@@ -32,7 +32,7 @@ import { wikimediaCommons } from '@refkit/provider-wikimedia-commons'
 import type { Modality } from './core/outcome.ts'
 
 /** Kept in sync with package.json by tests/config.test.ts. */
-export const PLUGIN_VERSION = '0.3.1'
+export const PLUGIN_VERSION = '0.3.2'
 
 export const KEY_FIELDS = [
   'unsplashAccessKey', 'pexelsApiKey', 'pixabayKey', 'flickrApiKey', 'smithsonianApiKey',
