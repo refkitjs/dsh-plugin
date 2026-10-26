@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write   # npm trusted publishing (OIDC): no npm token anywhere
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -16,7 +17,8 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          registry-url: 'https://registry.npmjs.org'
+      # Trusted publishing needs npm >= 11.5.1 (Node 22's bundled npm is 10).
+      - run: npm install -g npm@11
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test
@@ -27,6 +29,7 @@ jobs:
         run: test -z "$(git status --porcelain -- lib)"
       - name: Tag matches package version
         run: test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
+      # @refkit/dsh-plugin lists this repo and `release.yml` as its trusted publisher on
+      # npmjs.com, so npm exchanges the job's OIDC token here and signs provenance.
+      # No registry-url / NODE_AUTH_TOKEN: an `_authToken` in .npmrc would bypass OIDC.
       - run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
